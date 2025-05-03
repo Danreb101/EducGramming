@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:EducGramming.ViewModels"
+             xmlns:converters="clr-namespace:EducGramming.Converters"
+             xmlns:local="clr-namespace:EducGramming.Views"
+             x:Class="EducGramming.Views.LoginPage"
+             x:DataType="viewmodels:LoginViewModel"
+             BackgroundColor="#0A1128">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:PasswordVisibilityConverter x:Key="PasswordVisibilityConverter" />
+            <converters:InverseBoolConverter x:Key="InverseBool" />
+            <converters:PasswordVisibilityIconConverter x:Key="PasswordVisibilityIconConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <AbsoluteLayout>
+        <!-- Main Content -->
+        <ScrollView AbsoluteLayout.LayoutBounds="0,0,1,1"
+                   AbsoluteLayout.LayoutFlags="All">
+            <VerticalStackLayout Spacing="25" 
+                               Padding="20,60,20,0">
+                <!-- Logo and Welcome Text -->
+                <VerticalStackLayout Spacing="5" 
+                                   HorizontalOptions="Center">
+                    <Image Source="logo.png"
+                           HeightRequest="120"
+                           WidthRequest="120"
+                           Aspect="AspectFit"
+                           Margin="0,0,0,20"
+                           SemanticProperties.Description="EducGramming Logo"/>
+
+                    <Label Text="Welcome Back!"
+                           FontSize="28"
+                           TextColor="White"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"/>
+
+                    <Label Text="Sign in to continue"
+                           FontSize="16"
+                           TextColor="#B0B0B0"
+                           HorizontalOptions="Center"
+                           Margin="0,0,0,20"/>
+                </VerticalStackLayout>
+
+                <!-- Login Form Card -->
+                <Frame BackgroundColor="White"
+                       CornerRadius="15"
+                       Padding="20"
+                       HasShadow="True"
+                       BorderColor="Transparent">
+                    
+                    <VerticalStackLayout Spacing="20">
+                        <!-- Email -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Email"
+                                   TextColor="#333333"
+                                   FontSize="14"/>
+                            <Frame Padding="15,0" 
+                                   BackgroundColor="#F5F5F5"
+                                   BorderColor="Transparent"
+                                   CornerRadius="8"
+                                   HeightRequest="45"
+                                   HasShadow="False">
+                                <Entry Placeholder="Enter your email"
+                                       PlaceholderColor="#999999"
+                                       TextColor="#333333"
+                                       Text="{Binding Email}"
+                                       Keyboard="Email"
+                                       BackgroundColor="Transparent"/>
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Password -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Password"
+                                   TextColor="#333333"
+                                   FontSize="14"/>
+                            <Frame Padding="15,0" 
+                                   BackgroundColor="#F5F5F5"
+                                   BorderColor="Transparent"
+                                   CornerRadius="8"
+                                   HeightRequest="45"
+                                   HasShadow="False">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Entry Grid.Column="0"
+                                           Placeholder="Enter your password"
+                                           IsPassword="{Binding IsPasswordVisible, Converter={StaticResource InverseBool}}"
+                                           Text="{Binding Password}"
+                                           PlaceholderColor="#999999"
+                                           TextColor="#333333"
+                                           BackgroundColor="Transparent"/>
+                                    <ImageButton Grid.Column="1"
+                                               Source="{Binding IsPasswordVisible, Converter={StaticResource PasswordVisibilityIconConverter}}"
+                                               HeightRequest="24"
+                                               WidthRequest="24"
+                                               Aspect="AspectFit"
+                                               BackgroundColor="Transparent"
+                                               Command="{Binding TogglePasswordCommand}"/>
+                                </Grid>
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Stay Signed In and Forgot Password -->
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto">
+                            <HorizontalStackLayout Grid.Column="0" Spacing="10">
+                                <CheckBox Color="#007AFF"
+                                         IsChecked="{Binding StaySignedIn}"/>
+                                <Label Text="Stay Signed In"
+                                       TextColor="#666666"
+                                       VerticalOptions="Center"
+                                       FontSize="14"/>
+                            </HorizontalStackLayout>
+                            
+                            <Label Grid.Column="1" 
+                                   Text="Forgot Password?"
+                                   TextColor="#007AFF"
+                                   FontSize="14">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ForgotPasswordCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
+
+                        <!-- Terms and Conditions -->
+                        <HorizontalStackLayout Spacing="10">
+                            <CheckBox Color="#007AFF"
+                                     IsChecked="{Binding IsTermsAccepted}"/>
+                            <Label Text="I agree to the Terms and Conditions"
+                                   TextColor="#666666"
+                                   TextDecorations="Underline"
+                                   VerticalOptions="Center"
+                                   FontSize="14">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ShowTermsCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </HorizontalStackLayout>
+
+                        <!-- Sign In Button -->
+                        <Button Text="Sign In"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                Command="{Binding SignInCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}">
+                            <Button.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#0A1128" Offset="0.0" />
+                                    <GradientStop Color="#1B3B6F" Offset="1.0" />
+                                </LinearGradientBrush>
+                            </Button.Background>
+                        </Button>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Register Link -->
+                <HorizontalStackLayout HorizontalOptions="Center" 
+                                     Spacing="5"
+                                     Margin="0,10">
+                    <Label Text="Don't have an account?"
+                           TextColor="#B0B0B0"
+                           FontSize="14"/>
+                    <Label Text="Register Here"
+                           TextColor="#007AFF"
+                           FontSize="14">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding RegisterCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Terms and Conditions Popup -->
+        <ContentView x:Name="PopupLayer"
+                    IsVisible="False"
+                    AbsoluteLayout.LayoutBounds="0,0,1,1"
+                    AbsoluteLayout.LayoutFlags="All"
+                    BackgroundColor="#80000000">
+            <local:TermsAndConditionsPopup x:Name="TermsPopup" />
+        </ContentView>
+    </AbsoluteLayout>
+</ContentPage> 

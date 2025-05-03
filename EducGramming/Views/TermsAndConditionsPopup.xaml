@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EducGramming.Views.TermsAndConditionsPopup">
+    
+    <Frame BackgroundColor="White"
+           CornerRadius="15"
+           Margin="20"
+           Padding="20"
+           HasShadow="True"
+           BorderColor="Transparent"
+           MaximumHeightRequest="600">
+        
+        <Grid RowDefinitions="Auto,*,Auto">
+            <!-- Header -->
+            <VerticalStackLayout Grid.Row="0" Spacing="10">
+                <Label Text="Terms and Conditions"
+                       FontSize="24"
+                       TextColor="#0A1128"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"/>
+                <BoxView HeightRequest="1"
+                         BackgroundColor="#E0E0E0"
+                         HorizontalOptions="Fill"/>
+            </VerticalStackLayout>
+
+            <!-- Content -->
+            <ScrollView Grid.Row="1" Margin="0,10">
+                <VerticalStackLayout Spacing="15">
+                    <!-- Welcome Section -->
+                    <Label Text="Welcome to EducGramming!"
+                           FontAttributes="Bold"
+                           FontSize="18"
+                           TextColor="#0A1128"/>
+                    <Label Text="By using our educational programming application, you agree to these terms and conditions. Please read them carefully."
+                           TextColor="#333333"/>
+
+                    <!-- User Agreement Section -->
+                    <Label Text="1. User Agreement"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#0A1128"/>
+                    <Label TextColor="#333333">
+                        <Label.Text>
+By accessing and using EducGramming, you accept and agree to be bound by these terms and conditions. If you do not agree to these terms, please do not use our application.
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Privacy Section -->
+                    <Label Text="2. Privacy and Data Protection"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#0A1128"/>
+                    <Label TextColor="#333333">
+                        <Label.Text>
+We respect your privacy and protect your personal information. We collect and use data in accordance with our Privacy Policy, which includes:
+• User account information
+• Learning progress and performance data
+• Usage statistics and analytics
+                        </Label.Text>
+                    </Label>
+
+                    <!-- User Conduct -->
+                    <Label Text="3. User Conduct"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#0A1128"/>
+                    <Label TextColor="#333333">
+                        <Label.Text>
+Users must:
+• Provide accurate registration information
+• Maintain the security of their account
+• Not share account credentials
+• Use the platform for educational purposes only
+• Respect intellectual property rights
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Content Usage -->
+                    <Label Text="4. Content Usage"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#0A1128"/>
+                    <Label TextColor="#333333">
+                        <Label.Text>
+All content provided through EducGramming is for educational purposes. Users may not:
+• Copy or distribute content without permission
+• Use content for commercial purposes
+• Modify or create derivative works
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Changes to Terms -->
+                    <Label Text="5. Changes to Terms"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#0A1128"/>
+                    <Label TextColor="#333333">
+                        <Label.Text>
+We reserve the right to modify these terms at any time. Users will be notified of significant changes, and continued use of the application constitutes acceptance of modified terms.
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Contact Information -->
+                    <Label Text="6. Contact Information"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#0A1128"/>
+                    <Label TextColor="#333333">
+                        <Label.Text>
+For questions about these terms, please contact us at:
+support@educgramming.com
+                        </Label.Text>
+                    </Label>
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- Close Button -->
+            <Button Grid.Row="2"
+                    Text="I Understand"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="25"
+                    HeightRequest="50"
+                    Margin="0,10,0,0"
+                    Clicked="OnCloseButtonClicked">
+                <Button.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#0A1128" Offset="0.0" />
+                        <GradientStop Color="#1B3B6F" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Button.Background>
+            </Button>
+        </Grid>
+    </Frame>
+</ContentView> 

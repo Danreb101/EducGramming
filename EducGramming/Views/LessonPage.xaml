@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EducGramming.Views.LessonPage"
+             BackgroundColor="#0A1128">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header -->
+        <Grid Grid.Row="0" BackgroundColor="#007AFF" Padding="20,15">
+            <Label Text="Lesson"
+                   FontSize="24"
+                   TextColor="White"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Start"
+                   VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- Main Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20" Padding="20">
+                <!-- Video Player Section -->
+                <Frame BackgroundColor="#1A1A1A"
+                       CornerRadius="15"
+                       HasShadow="True"
+                       HeightRequest="220"
+                       Padding="0">
+                    <Grid>
+                        <!-- Video Placeholder -->
+                        <Image Source="playvideo.png"
+                               Aspect="AspectFill"/>
+                        
+                        <!-- Play Button -->
+                        <Button ImageSource="play.png"
+                                BackgroundColor="#FF0000"
+                                WidthRequest="60"
+                                HeightRequest="60"
+                                CornerRadius="30"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                Command="{Binding PlayVideoCommand}"/>
+
+                        <!-- Video Controls -->
+                        <Grid RowDefinitions="*,Auto" 
+                              IsVisible="{Binding IsVideoPlaying}"
+                              BackgroundColor="#80000000">
+                            
+                            <!-- Progress Bar -->
+                            <Slider Grid.Row="1"
+                                    Margin="10,0"
+                                    Value="{Binding VideoProgress}"
+                                    Maximum="100"
+                                    MinimumTrackColor="#FF0000"
+                                    MaximumTrackColor="#FFFFFF"/>
+                        </Grid>
+                    </Grid>
+                </Frame>
+
+                <!-- Lessons List -->
+                <Frame BackgroundColor="White"
+                       CornerRadius="15"
+                       HasShadow="True"
+                       Padding="0">
+                    <CollectionView ItemsSource="{Binding Lessons}"
+                                  SelectionMode="Single"
+                                  SelectedItem="{Binding SelectedLesson}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="15,12"
+                                      ColumnDefinitions="Auto,*,Auto">
+                                    <!-- Lesson Number -->
+                                    <Frame Grid.Column="0"
+                                           BackgroundColor="{Binding IsCompleted, Converter={StaticResource BoolToColorConverter}}"
+                                           WidthRequest="40"
+                                           HeightRequest="40"
+                                           CornerRadius="20"
+                                           Padding="0"
+                                           Margin="0,0,15,0">
+                                        <Label Text="{Binding Number}"
+                                               TextColor="White"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               FontAttributes="Bold"/>
+                                    </Frame>
+
+                                    <!-- Lesson Title and Description -->
+                                    <VerticalStackLayout Grid.Column="1" Spacing="5">
+                                        <Label Text="{Binding Title}"
+                                               FontSize="16"
+                                               TextColor="#333333"
+                                               FontAttributes="Bold"/>
+                                        <Label Text="{Binding Description}"
+                                               FontSize="14"
+                                               TextColor="#666666"/>
+                                    </VerticalStackLayout>
+
+                                    <!-- Status Icon -->
+                                    <Image Grid.Column="2"
+                                           Source="{Binding IsCompleted, Converter={StaticResource BoolToIconConverter}}"
+                                           WidthRequest="24"
+                                           HeightRequest="24"
+                                           VerticalOptions="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Frame>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage> 

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:EducGramming.ViewModels"
+             x:Class="EducGramming.Views.ProfilePage"
+             x:DataType="viewmodels:ProfileViewModel"
+             Title="Profile"
+             BackgroundColor="White">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="15" Padding="20,30,20,20">
+            <!-- Profile Card -->
+            <Frame BackgroundColor="White"
+                   CornerRadius="10"
+                   HasShadow="True"
+                   Padding="20"
+                   BorderColor="Transparent">
+                <VerticalStackLayout Spacing="10">
+                    <!-- Profile Picture -->
+                    <Frame CornerRadius="50"
+                           HeightRequest="100"
+                           WidthRequest="100"
+                           IsClippedToBounds="True"
+                           Padding="0"
+                           BackgroundColor="Gray"
+                           HorizontalOptions="Center"
+                           BorderColor="Transparent"/>
+                    
+                    <!-- User Info -->
+                    <VerticalStackLayout Spacing="5" HorizontalOptions="Center">
+                        <Label Text="{Binding FullName}"
+                               TextColor="#007AFF"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
+                        <Label Text="{Binding Username}"
+                               TextColor="#666666"
+                               FontSize="16"
+                               HorizontalOptions="Center"/>
+                        <Label Text="{Binding Email}"
+                               TextColor="#666666"
+                               FontSize="14"
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Progress Summary -->
+            <Frame BackgroundColor="#FFF9E6"
+                   CornerRadius="10"
+                   HasShadow="True"
+                   Padding="15"
+                   BorderColor="Transparent">
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Progress Summary"
+                           TextColor="Black"
+                           FontSize="16"
+                           FontAttributes="Bold"/>
+                    <Label Text="{Binding LessonsCompleted, StringFormat='Lessons completed: {0}'}"
+                           TextColor="#666666"
+                           FontSize="14"/>
+                    <Label Text="{Binding HighScore, StringFormat='High Score: {0}'}"
+                           TextColor="#666666"
+                           FontSize="14"/>
+                    <Label Text="{Binding TimeSpeed, StringFormat='Time spent (in seconds): {0}'}"
+                           TextColor="#666666"
+                           FontSize="14"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Account Settings -->
+            <Frame BackgroundColor="#F0F8F0"
+                   CornerRadius="10"
+                   HasShadow="True"
+                   Padding="15"
+                   BorderColor="Transparent">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Account Settings"
+                           TextColor="Black"
+                           FontSize="16"
+                           FontAttributes="Bold"/>
+
+                    <Button Text="CHANGE PASSWORD"
+                            Command="{Binding ChangePasswordCommand}"
+                            BackgroundColor="#34C759"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="5"
+                            HeightRequest="40"
+                            Margin="0,5,0,0"/>
+
+                    <Button Text="LOGOUT"
+                            Command="{Binding LogoutCommand}"
+                            BackgroundColor="#FF3B30"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="5"
+                            HeightRequest="40"/>
+                </VerticalStackLayout>
+            </Frame>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage> 

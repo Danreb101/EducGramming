@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="EducGramming.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:EducGramming.Views"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.NavBarIsVisible="False">
+
+    <!-- Auth Flow -->
+    <ShellContent
+        Route="login"
+        ContentTemplate="{DataTemplate local:LoginPage}"
+        FlyoutItemIsVisible="False" />
+
+    <ShellContent
+        Route="register"
+        ContentTemplate="{DataTemplate local:RegisterPage}"
+        FlyoutItemIsVisible="False" />
+
+    <ShellContent
+        Route="resetpassword"
+        ContentTemplate="{DataTemplate local:ResetPasswordPage}"
+        FlyoutItemIsVisible="False" />
+
+    <!-- Main App -->
+    <TabBar>
+        <Tab Title="Home"
+             Icon="home.png">
+            <ShellContent
+                Route="home"
+                ContentTemplate="{DataTemplate local:HomePage}" />
+        </Tab>
+
+        <Tab Title="Lesson"
+             Icon="lesson.png">
+            <ShellContent
+                Route="lesson"
+                ContentTemplate="{DataTemplate local:LessonPage}" />
+        </Tab>
+
+        <Tab Title="Play"
+             Icon="play.png">
+            <ShellContent
+                Route="play"
+                ContentTemplate="{DataTemplate local:PlayPage}" />
+        </Tab>
+
+        <Tab Title="Leaderboard"
+             Icon="leaderboard.png">
+            <ShellContent
+                Route="leaderboard"
+                ContentTemplate="{DataTemplate local:LeaderboardPage}" />
+        </Tab>
+
+        <Tab Title="Profile"
+             Icon="profile.png">
+            <ShellContent
+                Route="profile"
+                ContentTemplate="{DataTemplate local:ProfilePage}" />
+        </Tab>
+    </TabBar>
+
+</Shell>

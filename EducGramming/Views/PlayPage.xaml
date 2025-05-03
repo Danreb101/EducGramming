@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:EducGramming.ViewModels"
+             xmlns:behaviors="clr-namespace:EducGramming.Behaviors"
+             x:Class="EducGramming.Views.PlayPage"
+             x:DataType="viewmodels:PlayViewModel"
+             BackgroundColor="#0A1128">
+
+    <Grid RowDefinitions="Auto,*" Padding="20">
+        <!-- Header Section -->
+        <Grid Grid.Row="0" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+            <!-- Title -->
+            <Label Text="Coding Quiz"
+                   FontSize="24"
+                   TextColor="White"
+                   FontAttributes="Bold"
+                   Grid.Row="0"
+                   Grid.Column="0"/>
+
+            <!-- Close Button -->
+            <ImageButton Grid.Row="0"
+                        Grid.Column="2"
+                        Command="{Binding CloseCommand}"
+                        Source="close.png"
+                        HeightRequest="24"
+                        WidthRequest="24"
+                        BackgroundColor="Transparent"/>
+
+            <!-- Stats Section -->
+            <Grid Grid.Row="1" 
+                  Grid.Column="0"
+                  Grid.ColumnSpan="3"
+                  ColumnDefinitions="Auto,*,Auto"
+                  Margin="0,10,0,0">
+                
+                <!-- Lives -->
+                <Frame Grid.Column="0"
+                       BackgroundColor="#1B3B6F"
+                       CornerRadius="10"
+                       Padding="10,5"
+                       HasShadow="False">
+                    <HorizontalStackLayout Spacing="3">
+                        <Label x:Name="Heart1"
+                               Text="❤"
+                               FontSize="26"
+                               TextColor="#FF3B30"
+                               Scale="{Binding Heart1Scale}"
+                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=1}"/>
+                        <Label x:Name="Heart2"
+                               Text="❤"
+                               FontSize="26"
+                               TextColor="#FF3B30"
+                               Scale="{Binding Heart2Scale}"
+                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=2}"/>
+                        <Label x:Name="Heart3"
+                               Text="❤"
+                               FontSize="26"
+                               TextColor="#FF3B30"
+                               Scale="{Binding Heart3Scale}"
+                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=3}"/>
+                    </HorizontalStackLayout>
+                </Frame>
+
+                <!-- Scores -->
+                <HorizontalStackLayout Grid.Column="1" 
+                                     Spacing="15"
+                                     HorizontalOptions="Start"
+                                     Margin="15,0">
+                    <HorizontalStackLayout Spacing="3">
+                        <Label Text="Score:"
+                               TextColor="White"
+                               FontSize="16"
+                               Opacity="0.8"
+                               VerticalOptions="Center"/>
+                        <Label Text="{Binding Score}"
+                               TextColor="White"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                    
+                    <HorizontalStackLayout Spacing="3">
+                        <Label Text="Best:"
+                               TextColor="White"
+                               FontSize="16"
+                               Opacity="0.8"
+                               VerticalOptions="Center"/>
+                        <Label Text="{Binding HighScore}"
+                               TextColor="White"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </HorizontalStackLayout>
+
+                <!-- Timer -->
+                <Frame Grid.Column="2"
+                       BackgroundColor="#1B3B6F"
+                       CornerRadius="10"
+                       Padding="10,5"
+                       HasShadow="False">
+                    <HorizontalStackLayout Spacing="5">
+                        <Image Source="timer.png"
+                               HeightRequest="18"
+                               Opacity="0.8"/>
+                        <Label Text="TIME:"
+                               TextColor="White"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"/>
+                        <Label Text="{Binding TimeRemaining, StringFormat='{0}s'}"
+                               TextColor="White"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Frame>
+            </Grid>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" RowDefinitions="2*,Auto,3*" Margin="0,20,0,0">
+            <!-- Question Section -->
+            <Frame BackgroundColor="White"
+                   CornerRadius="15"
+                   Padding="20"
+                   HasShadow="True"
+                   Grid.Row="0">
+                <Label Text="{Binding CurrentQuestion}"
+                       FontSize="24"
+                       TextColor="#333333"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       HorizontalTextAlignment="Center"/>
+            </Frame>
+
+            <!-- Feedback Message -->
+            <Label Grid.Row="1"
+                   Text="{Binding FeedbackMessage}"
+                   TextColor="{Binding IsWrongAnswer, Converter={StaticResource BoolToColorConverter}}"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   Margin="0,10"
+                   IsVisible="{Binding FeedbackMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+
+            <!-- Answer Options Section -->
+            <VerticalStackLayout Grid.Row="2" 
+                               Spacing="15"
+                               Margin="0,10,0,0">
+                
+                <Frame BackgroundColor="#1B3B6F"
+                       CornerRadius="15"
+                       Padding="20"
+                       HeightRequest="80"
+                       HasShadow="True"
+                       x:Name="AnswerDropZone">
+                    <Label Text="Drop your answer here"
+                           TextColor="#B0B0B0"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           FontSize="16"/>
+                </Frame>
+
+                <!-- Answer Options -->
+                <CollectionView ItemsSource="{Binding AnswerOptions}"
+                              SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="10"/>
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Frame BackgroundColor="{Binding ., Converter={StaticResource AnswerToBackgroundConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type viewmodels:PlayViewModel}}, Path=LastWrongAnswer}}"
+                                   CornerRadius="15"
+                                   Padding="20"
+                                   HasShadow="True">
+                                <Frame.GestureRecognizers>
+                                    <DragGestureRecognizer DragStarting="OnDragStarting"/>
+                                </Frame.GestureRecognizers>
+                                <Label Text="{Binding .}"
+                                       TextColor="#333333"
+                                       HorizontalOptions="Center"
+                                       FontSize="18"/>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- Game Over Overlay -->
+        <Grid Grid.RowSpan="2"
+              BackgroundColor="#80000000"
+              IsVisible="{Binding IsGameOver}">
+            <VerticalStackLayout HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               Spacing="20">
+                <Label Text="Game Over!"
+                       TextColor="White"
+                   FontSize="32"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"/>
+                <Label Text="{Binding Score, StringFormat='Final Score: {0}'}"
+                       TextColor="White"
+                       FontSize="24"
+                   HorizontalOptions="Center"/>
+                <Button Text="Play Again"
+                        Command="{Binding RestartCommand}"
+                        BackgroundColor="#1B3B6F"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="25"
+                        Padding="30,15"/>
+        </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage> 

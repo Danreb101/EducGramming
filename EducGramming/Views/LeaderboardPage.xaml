@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:EducGramming.ViewModels"
+             xmlns:models="clr-namespace:EducGramming.Models"
+             x:Class="EducGramming.Views.LeaderboardPage"
+             x:DataType="viewmodels:LeaderboardViewModel"
+             Title="Leaderboard"
+             BackgroundColor="White">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Current User Stats -->
+        <Frame Grid.Row="0"
+               Margin="20,20,20,10"
+               Padding="20"
+               BackgroundColor="#F0F8FF"
+               CornerRadius="15"
+               HasShadow="True"
+               BorderColor="Transparent">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+                <Label Text="Your Stats"
+                       Grid.Row="0"
+                       Grid.ColumnSpan="3"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="#333333"
+                       Margin="0,0,0,10"/>
+
+                <Label Text="{Binding CurrentUsername}"
+                       Grid.Row="1"
+                       Grid.Column="0"
+                       FontSize="16"
+                       TextColor="#666666"/>
+
+                <Label Text="{Binding CurrentUserRank, StringFormat='Rank: #{0}'}"
+                       Grid.Row="1"
+                       Grid.Column="1"
+                       FontSize="16"
+                       TextColor="#666666"
+                       Margin="10,0"/>
+
+                <Label Text="{Binding CurrentUserScore, StringFormat='Score: {0}'}"
+                       Grid.Row="1"
+                       Grid.Column="2"
+                       FontSize="16"
+                       TextColor="#666666"/>
+            </Grid>
+        </Frame>
+
+        <!-- Leaderboard List -->
+        <RefreshView Grid.Row="1"
+                    IsRefreshing="{Binding IsRefreshing}"
+                    Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding Entries}"
+                          Margin="20,0,20,20">
+                <CollectionView.Header>
+                    <Grid ColumnDefinitions="Auto,*,Auto"
+                          Padding="15"
+                          BackgroundColor="#F5F5F5">
+                        <Label Text="Rank"
+                               Grid.Column="0"
+                               FontAttributes="Bold"
+                               TextColor="#333333"/>
+                        <Label Text="Username"
+                               Grid.Column="1"
+                               FontAttributes="Bold"
+                               TextColor="#333333"
+                               Margin="15,0"/>
+                        <Label Text="Score"
+                               Grid.Column="2"
+                               FontAttributes="Bold"
+                               TextColor="#333333"/>
+                    </Grid>
+                </CollectionView.Header>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:LeaderboardEntry">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              Padding="15"
+                              BackgroundColor="{Binding IsCurrentUser, Converter={StaticResource BoolToColorConverter}, ConverterParameter='#F0F8FF,White'}">
+                            <Label Text="{Binding Rank}"
+                                   Grid.Column="0"
+                                   TextColor="#666666"
+                                   FontSize="16"/>
+                            <Label Text="{Binding Username}"
+                                   Grid.Column="1"
+                                   TextColor="#666666"
+                                   FontSize="16"
+                                   Margin="15,0"/>
+                            <Label Text="{Binding Score}"
+                                   Grid.Column="2"
+                                   TextColor="#666666"
+                                   FontSize="16"/>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage> 

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EducGramming.Views.HomePage"
+             BackgroundColor="#FFFDF5">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="20">
+            <!-- Welcome Message -->
+            <Label 
+                Text="{Binding WelcomeMessage}"
+                FontSize="24"
+                FontAttributes="Bold"
+                TextColor="Black"
+                Margin="0,20,0,10"/>
+
+            <Label 
+                Text="{Binding SubtitleMessage}"
+                FontSize="16"
+                TextColor="#666666"
+                Margin="0,0,0,20"/>
+
+            <!-- C# Card -->
+            <Frame
+                BackgroundColor="White"
+                CornerRadius="15"
+                HasShadow="True"
+                Padding="15"
+                BorderColor="Transparent">
+                
+                <VerticalStackLayout Spacing="10">
+                    <Label 
+                        Text="C#"
+                        TextColor="#007AFF"
+                        FontSize="20"
+                        FontAttributes="Bold"/>
+                    
+                    <Label 
+                        Text="A modern, object-oriented programming language developed by Microsoft, widely used for building Windows applications and games."
+                        TextColor="#666666"
+                        FontSize="14"
+                        LineBreakMode="WordWrap"/>
+                    
+                    <Button 
+                        Text="Learn"
+                        Command="{Binding LearnCSharpCommand}"
+                        BackgroundColor="#007AFF"
+                        TextColor="White"
+                        CornerRadius="5"
+                        HeightRequest="40"
+                        WidthRequest="100"
+                        HorizontalOptions="Start"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Java Card -->
+            <Frame
+                BackgroundColor="White"
+                CornerRadius="15"
+                HasShadow="True"
+                Padding="15"
+                BorderColor="Transparent">
+                
+                <VerticalStackLayout Spacing="10">
+                    <Label 
+                        Text="Java"
+                        TextColor="#FF6B00"
+                        FontSize="20"
+                        FontAttributes="Bold"/>
+                    
+                    <Label 
+                        Text="A versatile, class-based programming language designed for portability and performance, popular for Android and enterprise applications."
+                        TextColor="#666666"
+                        FontSize="14"
+                        LineBreakMode="WordWrap"/>
+                    
+                    <Button 
+                        Text="Learn"
+                        Command="{Binding LearnJavaCommand}"
+                        BackgroundColor="#FF6B00"
+                        TextColor="White"
+                        CornerRadius="5"
+                        HeightRequest="40"
+                        WidthRequest="100"
+                        HorizontalOptions="Start"/>
+                </VerticalStackLayout>
+            </Frame>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage> 
