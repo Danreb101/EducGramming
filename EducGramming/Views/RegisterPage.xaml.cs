@@ -1,23 +1,110 @@
 using Microsoft.Maui.Controls;
 using EducGramming.ViewModels;
+using EducGramming.Services;
+using System.Diagnostics;
 
 namespace EducGramming.Views
 {
     public partial class RegisterPage : ContentPage
     {
-        private bool _isPasswordVisible;
-        private readonly RegisterViewModel _viewModel;
+        private RegisterViewModel _viewModel;
+        private FirebaseAuthService _authService;
 
+        // Constructor for dependency injection (used by DI container)
         public RegisterPage(RegisterViewModel viewModel)
         {
-            InitializeComponent();
-            _viewModel = viewModel;
-            _isPasswordVisible = false;
-            togglePasswordImage.Source = "eye.svg";
-            BindingContext = _viewModel;
+            try 
+            {
+                InitializeComponent();
+                _viewModel = viewModel;
+                BindingContext = _viewModel;
+                _authService = new FirebaseAuthService();
 
-            // Start animations when page appears
-            this.Loaded += OnPageLoaded;
+                // Start animations when page appears
+                this.Loaded += OnPageLoaded;
+
+                // Subscribe to the ShowTerms event from ViewModel
+                _viewModel.ShowTermsRequested += OnShowTermsRequested;
+
+                // Subscribe to terms popup events
+                if (TermsPopup != null)
+                {
+                    TermsPopup.CloseClicked += OnTermsPopupClosed;
+                }
+                
+                Debug.WriteLine("RegisterPage initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error initializing RegisterPage: {ex.Message}");
+            }
+        }
+        
+        // Default constructor (used when directly creating a page)
+        public RegisterPage()
+        {
+            try 
+            {
+                InitializeComponent();
+                _viewModel = new RegisterViewModel();
+                BindingContext = _viewModel;
+                _authService = new FirebaseAuthService();
+
+                // Start animations when page appears
+                this.Loaded += OnPageLoaded;
+
+                // Subscribe to the ShowTerms event from ViewModel
+                _viewModel.ShowTermsRequested += OnShowTermsRequested;
+
+                // Subscribe to terms popup events
+                if (TermsPopup != null)
+                {
+                    TermsPopup.CloseClicked += OnTermsPopupClosed;
+                }
+                
+                Debug.WriteLine("RegisterPage initialized successfully (default constructor)");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error initializing RegisterPage: {ex.Message}");
+            }
+        }
+
+        private void OnShowTermsRequested(object sender, EventArgs e)
+        {
+            // Show the popup layer with animation
+            PopupLayer.IsVisible = true;
+            PopupLayer.Opacity = 0;
+            PopupLayer.FadeTo(1, 250, Easing.CubicOut);
+        }
+
+        private async void OnTermsPopupClosed(object sender, EventArgs e)
+        {
+            // When the user clicks "I Understand", we consider it as accepting the terms
+            _viewModel.HandleTermsAcceptance(true);
+
+            // Hide the popup with animation
+            await PopupLayer.FadeTo(0, 250, Easing.CubicOut);
+            PopupLayer.IsVisible = false;
+
+            // Show a confirmation message
+            await DisplayAlert("Terms Accepted", "You have accepted the Terms and Conditions.", "OK");
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            
+            // Unsubscribe from events
+            if (_viewModel != null)
+            {
+                _viewModel.ShowTermsRequested -= OnShowTermsRequested;
+            }
+
+            if (TermsPopup != null)
+            {
+                TermsPopup.CloseClicked -= OnTermsPopupClosed;
+            }
         }
 
         private async void OnPageLoaded(object sender, EventArgs e)
@@ -48,61 +135,54 @@ namespace EducGramming.Views
             await LoginLink.FadeTo(1, 300, Easing.CubicOut);
         }
 
-        private void OnTogglePasswordVisibility(object sender, EventArgs e)
-        {
-            _isPasswordVisible = !_isPasswordVisible;
-            passwordEntry.IsPassword = !_isPasswordVisible;
-            togglePasswordImage.Source = _isPasswordVisible ? "eye_off.svg" : "eye.svg";
-
-            // Add subtle animation to the toggle
-            togglePasswordImage.ScaleTo(0.8, 50, Easing.CubicInOut)
-                .ContinueWith((t) => togglePasswordImage.ScaleTo(1, 50, Easing.CubicInOut));
-        }
-
         private async void OnRegisterButtonClicked(object sender, EventArgs e)
         {
-            if (!termsCheckbox.IsChecked)
+            var button = sender as Button;
+            if (button != null)
             {
-                // Shake animation for checkbox
-                var originalColor = termsCheckbox.Color;
-                termsCheckbox.Color = Colors.Red;
-                await termsCheckbox.TranslateTo(-5, 0, 50);
-                await termsCheckbox.TranslateTo(5, 0, 50);
-                await termsCheckbox.TranslateTo(0, 0, 50);
-                termsCheckbox.Color = originalColor;
-
-                await DisplayAlert("Error", "Please accept the Terms and Conditions", "OK");
-                return;
+                button.IsEnabled = false;
             }
 
             try
             {
-                registerButton.IsEnabled = false;
-                
-                // Scale down animation
-                await registerButton.ScaleTo(0.95, 100, Easing.CubicInOut);
-                
-                // Execute the register command
-                if (_viewModel.RegisterCommand.CanExecute(null))
+                // Validate fields
+                if (string.IsNullOrWhiteSpace(_viewModel.Email) || 
+                    string.IsNullOrWhiteSpace(_viewModel.Password) || 
+                    string.IsNullOrWhiteSpace(_viewModel.FullName))
                 {
-                    _viewModel.RegisterCommand.Execute(null);
+                    await DisplayAlert("Error", "Please fill in all fields", "OK");
+                    return;
                 }
 
-                // Scale back up
-                await registerButton.ScaleTo(1, 100, Easing.CubicInOut);
+                if (!_viewModel.IsTermsAccepted)
+                {
+                    await DisplayAlert("Error", "Please accept the Terms and Conditions", "OK");
+                    return;
+                }
+
+                bool success = await _viewModel.RegisterUserAsync();
+                if (success)
+                {
+                    await DisplayAlert("Success", "Registration successful! Please login with your credentials.", "OK");
+                    await Shell.Current.GoToAsync("//login");
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", ex.Message, "OK");
             }
             finally
             {
-                registerButton.IsEnabled = true;
+                if (button != null)
+                {
+                    button.IsEnabled = true;
+                }
             }
         }
 
         private async void OnLoginClicked(object sender, EventArgs e)
         {
-            if (_viewModel.BackToLoginCommand.CanExecute(null))
-            {
-                _viewModel.BackToLoginCommand.Execute(null);
-            }
+            await Shell.Current.GoToAsync("//login");
         }
     }
 } 

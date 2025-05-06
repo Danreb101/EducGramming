@@ -2,13 +2,12 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EducGramming.Views.TermsAndConditionsPopup">
-    
     <Frame BackgroundColor="White"
            CornerRadius="15"
            Margin="20"
            Padding="20"
-           HasShadow="True"
-           BorderColor="Transparent"
+           VerticalOptions="Center"
+           HorizontalOptions="Fill"
            MaximumHeightRequest="600">
         
         <Grid RowDefinitions="Auto,*,Auto">
@@ -42,7 +41,7 @@
                            TextColor="#0A1128"/>
                     <Label TextColor="#333333">
                         <Label.Text>
-By accessing and using EducGramming, you accept and agree to be bound by these terms and conditions. If you do not agree to these terms, please do not use our application.
+By accessing and using EducGramming, you accept and agree to these terms and conditions. If you do not agree to these terms, please do not use our application.
                         </Label.Text>
                     </Label>
 
@@ -76,33 +75,83 @@ Users must:
                         </Label.Text>
                     </Label>
 
-                    <!-- Content Usage -->
-                    <Label Text="4. Content Usage"
+                    <!-- Educational Content -->
+                    <Label Text="4. Educational Content"
                            FontAttributes="Bold"
                            FontSize="16"
                            TextColor="#0A1128"/>
                     <Label TextColor="#333333">
                         <Label.Text>
-All content provided through EducGramming is for educational purposes. Users may not:
-• Copy or distribute content without permission
-• Use content for commercial purposes
-• Modify or create derivative works
+Our educational content:
+• Is provided for learning purposes only
+• May be updated or modified periodically
+• Is protected by copyright and intellectual property laws
+• Should not be copied, distributed, or modified without permission
                         </Label.Text>
                     </Label>
 
-                    <!-- Changes to Terms -->
-                    <Label Text="5. Changes to Terms"
+                    <!-- Account Security -->
+                    <Label Text="5. Account Security"
                            FontAttributes="Bold"
                            FontSize="16"
                            TextColor="#0A1128"/>
                     <Label TextColor="#333333">
                         <Label.Text>
-We reserve the right to modify these terms at any time. Users will be notified of significant changes, and continued use of the application constitutes acceptance of modified terms.
+You are responsible for:
+• Maintaining the confidentiality of your account
+• All activities that occur under your account
+• Notifying us of any unauthorized access
+• Ensuring your password meets security requirements
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Learning Progress -->
+                    <Label Text="6. Learning Progress"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#0A1128"/>
+                    <Label TextColor="#333333">
+                        <Label.Text>
+We track and store:
+• Your progress through courses
+• Quiz and assessment results
+• Time spent on learning activities
+• Completion certificates and achievements
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Prohibited Activities -->
+                    <Label Text="7. Prohibited Activities"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#0A1128"/>
+                    <Label TextColor="#333333">
+                        <Label.Text>
+The following activities are prohibited:
+• Sharing solutions to exercises
+• Attempting to bypass security measures
+• Using automated systems to access content
+• Disrupting the learning experience of others
+                        </Label.Text>
+                    </Label>
+
+                    <!-- Changes to Service -->
+                    <Label Text="8. Changes to Service"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           TextColor="#0A1128"/>
+                    <Label TextColor="#333333">
+                        <Label.Text>
+We reserve the right to:
+• Modify or discontinue features
+• Update content and materials
+• Change pricing (with notice)
+• Terminate accounts for violations
                         </Label.Text>
                     </Label>
 
                     <!-- Contact Information -->
-                    <Label Text="6. Contact Information"
+                    <Label Text="9. Contact Information"
                            FontAttributes="Bold"
                            FontSize="16"
                            TextColor="#0A1128"/>
@@ -112,6 +161,12 @@ For questions about these terms, please contact us at:
 support@educgramming.com
                         </Label.Text>
                     </Label>
+
+                    <!-- Last Updated -->
+                    <Label Text="Last Updated: May 2024"
+                           FontSize="12"
+                           TextColor="#666666"
+                           Margin="0,10,0,0"/>
                 </VerticalStackLayout>
             </ScrollView>
 

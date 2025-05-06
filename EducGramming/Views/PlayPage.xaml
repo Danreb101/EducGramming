@@ -11,7 +11,7 @@
         <!-- Header Section -->
         <Grid Grid.Row="0" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
             <!-- Title -->
-            <Label Text="Coding Quizz"
+            <Label Text="Coding Quiz"
                    FontSize="24"
                    TextColor="White"
                    FontAttributes="Bold"

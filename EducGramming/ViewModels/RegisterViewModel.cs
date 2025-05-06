@@ -2,93 +2,62 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using EducGramming.Services;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System.Diagnostics;
 
 namespace EducGramming.ViewModels
 {
-    public class RegisterViewModel : INotifyPropertyChanged
+    public partial class RegisterViewModel : ObservableObject
     {
-        private readonly UserService _userService;
-        private string _email = string.Empty;
-        private string _password = string.Empty;
-        private string _username = string.Empty;
-        private string _fullName = string.Empty;
-        private bool _isBusy;
+        private UserService _userService;
+        public event EventHandler ShowTermsRequested;
+        public event EventHandler<bool> TermsAccepted;
 
-        public event PropertyChangedEventHandler? PropertyChanged;
+        [ObservableProperty]
+        private string fullName;
 
-        public string Email
-        {
-            get => _email;
-            set
-            {
-                if (_email != value)
-                {
-                    _email = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        private string email;
 
-        public string Password
-        {
-            get => _password;
-            set
-            {
-                if (_password != value)
-                {
-                    _password = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        private string password;
 
-        public string Username
-        {
-            get => _username;
-            set
-            {
-                if (_username != value)
-                {
-                    _username = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        private bool isPasswordVisible;
 
-        public string FullName
-        {
-            get => _fullName;
-            set
-            {
-                if (_fullName != value)
-                {
-                    _fullName = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        private bool isTermsAccepted;
 
-        public bool IsBusy
-        {
-            get => _isBusy;
-            set
-            {
-                if (_isBusy != value)
-                {
-                    _isBusy = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        private bool isBusy;
 
         public ICommand RegisterCommand { get; private set; }
         public ICommand BackToLoginCommand { get; private set; }
+        public ICommand TogglePasswordCommand { get; private set; }
+        public ICommand ShowTermsCommand { get; private set; }
 
         public RegisterViewModel()
         {
-            _userService = new UserService();
-            RegisterCommand = new Command(async () => await RegisterAsync());
-            BackToLoginCommand = new Command(async () => await NavigateBackToLogin());
+            try
+            {
+                _userService = new UserService();
+                RegisterCommand = new AsyncRelayCommand(RegisterAsync);
+                BackToLoginCommand = new AsyncRelayCommand(BackToLoginAsync);
+                TogglePasswordCommand = new RelayCommand(TogglePassword);
+                ShowTermsCommand = new RelayCommand(ShowTerms);
+                
+                // Initialize defaults
+                this.Email = string.Empty;
+                this.Password = string.Empty;
+                this.FullName = string.Empty;
+                
+                Debug.WriteLine("RegisterViewModel initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error initializing RegisterViewModel: {ex.Message}");
+            }
         }
 
         private async Task RegisterAsync()
@@ -101,18 +70,26 @@ namespace EducGramming.ViewModels
 
                 if (string.IsNullOrWhiteSpace(Email) || 
                     string.IsNullOrWhiteSpace(Password) || 
-                    string.IsNullOrWhiteSpace(Username) || 
                     string.IsNullOrWhiteSpace(FullName))
                 {
                     await Application.Current.MainPage.DisplayAlert("Error", "Please fill in all fields", "OK");
                     return;
                 }
 
-                // Register user using UserService
-                await _userService.RegisterUser(Email, Password, Username, FullName);
+                if (!IsTermsAccepted)
+                {
+                    await Application.Current.MainPage.DisplayAlert("Error", "Please accept the Terms and Conditions", "OK");
+                    return;
+                }
+
+                // Use email as username
+                string username = Email.Split('@')[0];
+
+                // Register user with Firebase through UserService
+                await _userService.RegisterUser(Email, Password, username, FullName);
 
                 await Application.Current.MainPage.DisplayAlert("Success", "Registration successful! Please login with your credentials.", "OK");
-                await NavigateBackToLogin();
+                await BackToLoginAsync();
             }
             catch (Exception ex)
             {
@@ -124,7 +101,7 @@ namespace EducGramming.ViewModels
             }
         }
 
-        private async Task NavigateBackToLogin()
+        private async Task BackToLoginAsync()
         {
             if (IsBusy) return;
 
@@ -143,9 +120,59 @@ namespace EducGramming.ViewModels
             }
         }
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        private void TogglePassword()
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            IsPasswordVisible = !IsPasswordVisible;
+        }
+
+        private void ShowTerms()
+        {
+            ShowTermsRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void HandleTermsAcceptance(bool accepted)
+        {
+            IsTermsAccepted = accepted;
+            TermsAccepted?.Invoke(this, accepted);
+        }
+
+        public async Task<bool> RegisterUserAsync()
+        {
+            if (IsBusy) return false;
+
+            try
+            {
+                IsBusy = true;
+
+                if (string.IsNullOrWhiteSpace(Email) || 
+                    string.IsNullOrWhiteSpace(Password) || 
+                    string.IsNullOrWhiteSpace(FullName))
+                {
+                    return false;
+                }
+
+                if (!IsTermsAccepted)
+                {
+                    return false;
+                }
+
+                // Use email as username
+                string username = Email.Split('@')[0];
+
+                // Register user with Firebase through UserService
+                await _userService.RegisterUser(Email, Password, username, FullName);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Registration error: {ex.Message}");
+                await Application.Current.MainPage.DisplayAlert("Registration Error", ex.Message, "OK");
+                return false;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
     }
 } 

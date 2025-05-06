@@ -1,6 +1,9 @@
 using System.Windows.Input;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Microsoft.Maui;
+using Microsoft.Maui.Storage;
+using Microsoft.Maui.Controls;
 
 namespace EducGramming.ViewModels
 {
@@ -95,7 +98,13 @@ namespace EducGramming.ViewModels
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (PropertyChanged != null)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+                });
+            }
         }
     }
 } 

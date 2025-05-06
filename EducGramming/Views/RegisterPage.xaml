@@ -3,186 +3,168 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EducGramming.Views.RegisterPage"
              xmlns:viewmodels="clr-namespace:EducGramming.ViewModels"
+             xmlns:local="clr-namespace:EducGramming.Views"
              x:DataType="viewmodels:RegisterViewModel"
              Shell.NavBarIsVisible="False"
              BackgroundColor="#0A1128">
 
-    <ScrollView>
-        <VerticalStackLayout x:Name="MainContent" 
-                            Spacing="25" 
-                            Padding="20,60,20,0"
-                            Opacity="0">
-            <!-- Logo and Title -->
-            <VerticalStackLayout x:Name="LogoContainer" 
-                               Spacing="5" 
-                               HorizontalOptions="Center"
-                               TranslationY="50">
-                <Image Source="@logo.png"
-                       HeightRequest="100"
-                       WidthRequest="100"
-                       Aspect="AspectFit"
-                       Margin="0,0,0,20"
-                       SemanticProperties.Description="EducGramming Logo"/>
+    <AbsoluteLayout>
+        <!-- Main Content -->
+        <ScrollView AbsoluteLayout.LayoutBounds="0,0,1,1"
+                   AbsoluteLayout.LayoutFlags="All">
+            <VerticalStackLayout x:Name="MainContent" 
+                                Spacing="25" 
+                                Padding="20,60,20,0"
+                                Opacity="0">
+                <!-- Logo and Title -->
+                <VerticalStackLayout x:Name="LogoContainer" 
+                                   Spacing="5" 
+                                   HorizontalOptions="Center"
+                                   TranslationY="50">
+                    <Image Source="logo.png"
+                           HeightRequest="100"
+                           WidthRequest="100"
+                           Aspect="AspectFit"
+                           Margin="0,0,0,20"
+                           SemanticProperties.Description="EducGramming Logo"/>
 
-                <Label Text="Create Account"
-                       FontSize="28"
-                       TextColor="White"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center"/>
+                    <Label Text="Create Account"
+                           FontSize="28"
+                           TextColor="White"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"/>
 
-                <Label Text="Please fill in the form to continue"
-                       FontSize="16"
-                       TextColor="#B0B0B0"
-                       HorizontalOptions="Center"
-                       Margin="0,0,0,20"/>
-            </VerticalStackLayout>
+                    <Label Text="Please fill in the form to continue"
+                           FontSize="16"
+                           TextColor="#B0B0B0"
+                           HorizontalOptions="Center"
+                           Margin="0,0,0,20"/>
+                </VerticalStackLayout>
 
-            <!-- Registration Form Card -->
-            <Frame x:Name="FormCard"
-                   BackgroundColor="White"
-                   CornerRadius="15"
-                   Padding="20"
-                   HasShadow="True"
-                   BorderColor="Transparent"
-                   TranslationY="50"
-                   Opacity="0">
-                
-                <VerticalStackLayout Spacing="15">
-                    <!-- Full Name -->
-                    <Frame Padding="15,0" 
-                           BackgroundColor="#F5F5F5"
-                           BorderColor="Transparent"
-                           CornerRadius="8"
-                           HeightRequest="45"
-                           HasShadow="False">
-                        <Entry x:Name="fullNameEntry"
-                               Text="{Binding FullName}"
-                               Placeholder="Enter full name"
-                               PlaceholderColor="#999999"
-                               TextColor="#333333"
-                               BackgroundColor="Transparent"/>
-                    </Frame>
-
-                    <!-- Username -->
-                    <Frame Padding="15,0" 
-                           BackgroundColor="#F5F5F5"
-                           BorderColor="Transparent"
-                           CornerRadius="8"
-                           HeightRequest="45"
-                           HasShadow="False">
-                        <Entry x:Name="usernameEntry"
-                               Text="{Binding Username}"
-                               Placeholder="Enter your username"
-                               PlaceholderColor="#999999"
-                               TextColor="#333333"
-                               BackgroundColor="Transparent"/>
-                    </Frame>
-
-                    <!-- Email -->
-                    <Frame Padding="15,0" 
-                           BackgroundColor="#F5F5F5"
-                           BorderColor="Transparent"
-                           CornerRadius="8"
-                           HeightRequest="45"
-                           HasShadow="False">
-                        <Entry x:Name="emailEntry"
-                               Text="{Binding Email}"
-                               Placeholder="Enter email"
-                               PlaceholderColor="#999999"
-                               TextColor="#333333"
-                               BackgroundColor="Transparent"
-                               Keyboard="Email"/>
-                    </Frame>
-
-                    <!-- Password -->
-                    <Frame Padding="15,0" 
-                           BackgroundColor="#F5F5F5"
-                           BorderColor="Transparent"
-                           CornerRadius="8"
-                           HeightRequest="45"
-                           HasShadow="False">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <Entry x:Name="passwordEntry"
-                                   Grid.Column="0"
-                                   Text="{Binding Password}"
-                                   Placeholder="Enter your password"
-                                   IsPassword="True"
+                <!-- Registration Form Card -->
+                <Frame x:Name="FormCard"
+                       BackgroundColor="White"
+                       CornerRadius="15"
+                       Padding="20"
+                       HasShadow="True"
+                       BorderColor="Transparent"
+                       TranslationY="50"
+                       Opacity="0">
+                    
+                    <VerticalStackLayout Spacing="15">
+                        <!-- Full Name -->
+                        <Frame Padding="15,0" 
+                               BackgroundColor="#F5F5F5"
+                               BorderColor="Transparent"
+                               CornerRadius="8"
+                               HeightRequest="45"
+                               HasShadow="False">
+                            <Entry Text="{Binding FullName}"
+                                   Placeholder="Enter Full Name"
                                    PlaceholderColor="#999999"
                                    TextColor="#333333"
                                    BackgroundColor="Transparent"/>
-                            <ImageButton x:Name="togglePasswordImage"
-                                       Grid.Column="1"
-                                       Source="eye.svg"
-                                       HeightRequest="24"
-                                       WidthRequest="24"
-                                       Aspect="AspectFit"
-                                       BackgroundColor="Transparent"
-                                       Clicked="OnTogglePasswordVisibility"/>
-                        </Grid>
-                    </Frame>
+                        </Frame>
 
-                    <!-- Terms and Conditions -->
-                    <HorizontalStackLayout Spacing="10">
-                        <CheckBox x:Name="termsCheckbox" Color="#007AFF"/>
-                        <Label Text="I agree to the Terms and Conditions"
-                               TextColor="#666666"
-                               VerticalOptions="Center"
-                               FontSize="14"/>
-                    </HorizontalStackLayout>
+                        <!-- Email -->
+                        <Frame Padding="15,0" 
+                               BackgroundColor="#F5F5F5"
+                               BorderColor="Transparent"
+                               CornerRadius="8"
+                               HeightRequest="45"
+                               HasShadow="False">
+                            <Entry Text="{Binding Email}"
+                                   Placeholder="Enter email"
+                                   PlaceholderColor="#999999"
+                                   TextColor="#333333"
+                                   BackgroundColor="Transparent"
+                                   Keyboard="Email"/>
+                        </Frame>
 
-                    <!-- Register Button -->
-                    <Button x:Name="registerButton"
-                            Text="Register"
-                            TextColor="White"
-                            FontAttributes="Bold"
-                            CornerRadius="25"
-                            HeightRequest="50"
-                            Margin="0,10"
-                            Clicked="OnRegisterButtonClicked">
-                        <Button.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#0A1128" Offset="0.0" />
-                                <GradientStop Color="#1B3B6F" Offset="1.0" />
-                            </LinearGradientBrush>
-                        </Button.Background>
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup Name="CommonStates">
-                                <VisualState Name="Normal" />
-                                <VisualState Name="Pressed">
-                                    <VisualState.Setters>
-                                        <Setter Property="Opacity" Value="0.8" />
-                                        <Setter Property="Scale" Value="0.98" />
-                                    </VisualState.Setters>
-                                </VisualState>
-                                <VisualState Name="Disabled">
-                                    <VisualState.Setters>
-                                        <Setter Property="Opacity" Value="0.6" />
-                                    </VisualState.Setters>
-                                </VisualState>
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
-                    </Button>
-                </VerticalStackLayout>
-            </Frame>
+                        <!-- Password -->
+                        <Frame Padding="15,0" 
+                               BackgroundColor="#F5F5F5"
+                               BorderColor="Transparent"
+                               CornerRadius="8"
+                               HeightRequest="45"
+                               HasShadow="False">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Entry Grid.Column="0"
+                                       x:Name="passwordEntry"
+                                       Text="{Binding Password}"
+                                       Placeholder="Enter your password"
+                                       IsPassword="{Binding IsPasswordVisible, Converter={StaticResource InverseBool}}"
+                                       PlaceholderColor="#999999"
+                                       TextColor="#333333"
+                                       BackgroundColor="Transparent"/>
+                                <ImageButton Grid.Column="1"
+                                           x:Name="togglePasswordImage"
+                                           Source="{Binding IsPasswordVisible, Converter={StaticResource PasswordVisibilityIconConverter}}"
+                                           HeightRequest="24"
+                                           WidthRequest="24"
+                                           Aspect="AspectFit"
+                                           BackgroundColor="Transparent"
+                                           Command="{Binding TogglePasswordCommand}"/>
+                            </Grid>
+                        </Frame>
 
-            <!-- Login Link -->
-            <HorizontalStackLayout x:Name="LoginLink"
-                                 HorizontalOptions="Center" 
-                                 Spacing="5"
-                                 Margin="0,10"
-                                 Opacity="0">
-                <Label Text="Already have an account?"
-                       TextColor="#B0B0B0"
-                       FontSize="14"/>
-                <Label Text="Login Here"
-                       TextColor="#007AFF"
-                       FontSize="14">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnLoginClicked"/>
-                    </Label.GestureRecognizers>
-                </Label>
-            </HorizontalStackLayout>
+                        <!-- Terms and Conditions -->
+                        <HorizontalStackLayout Spacing="10">
+                            <CheckBox x:Name="termsCheckBox"
+                                     Color="#007AFF"
+                                     IsChecked="{Binding IsTermsAccepted}"/>
+                            <Label Text="I agree to the Terms and Conditions"
+                                   TextColor="#666666"
+                                   TextDecorations="Underline"
+                                   VerticalOptions="Center"
+                                   FontSize="14">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ShowTermsCommand}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </HorizontalStackLayout>
 
-        </VerticalStackLayout>
-    </ScrollView>
+                        <!-- Register Button -->
+                        <Button x:Name="registerButton"
+                                Text="Register"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                BackgroundColor="#0A1128"
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                Margin="0,10"
+                                Clicked="OnRegisterButtonClicked">
+                        </Button>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Login Link -->
+                <HorizontalStackLayout x:Name="LoginLink"
+                                     HorizontalOptions="Center" 
+                                     Spacing="5"
+                                     Margin="0,10"
+                                     Opacity="0">
+                    <Label Text="Already have an account?"
+                           TextColor="#B0B0B0"
+                           FontSize="14"/>
+                    <Label Text="Login Here"
+                           TextColor="#007AFF"
+                           FontSize="14">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding BackToLoginCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Terms and Conditions Popup -->
+        <ContentView x:Name="PopupLayer"
+                    IsVisible="False"
+                    AbsoluteLayout.LayoutBounds="0,0,1,1"
+                    AbsoluteLayout.LayoutFlags="All"
+                    BackgroundColor="#80000000">
+            <local:TermsAndConditionsPopup x:Name="TermsPopup" />
+        </ContentView>
+    </AbsoluteLayout>
 </ContentPage> 

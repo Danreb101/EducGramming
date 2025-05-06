@@ -1,5 +1,7 @@
 using Microsoft.Maui.Controls;
 using EducGramming.ViewModels;
+using EducGramming.Services;
+using System.Diagnostics;
 
 namespace EducGramming.Views
 {
@@ -7,18 +9,29 @@ namespace EducGramming.Views
     {
         private bool _isNewPasswordVisible;
         private bool _isConfirmPasswordVisible;
+        private FirebaseAuthService _authService;
 
         public ResetPasswordPage()
         {
-            InitializeComponent();
-            _isNewPasswordVisible = false;
-            _isConfirmPasswordVisible = false;
-            toggleNewPasswordImage.Source = "eye.svg";
-            toggleConfirmPasswordImage.Source = "eye.svg";
-            BindingContext = new ResetPasswordViewModel();
+            try
+            {
+                InitializeComponent();
+                _isNewPasswordVisible = false;
+                _isConfirmPasswordVisible = false;
+                toggleNewPasswordImage.Source = "eye.svg";
+                toggleConfirmPasswordImage.Source = "eye.svg";
+                BindingContext = new ResetPasswordViewModel();
+                _authService = new FirebaseAuthService();
 
-            // Start animations when page appears
-            this.Loaded += OnPageLoaded;
+                // Start animations when page appears
+                this.Loaded += OnPageLoaded;
+                
+                Debug.WriteLine("ResetPasswordPage initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error initializing ResetPasswordPage: {ex.Message}");
+            }
         }
 
         private async void OnPageLoaded(object sender, EventArgs e)
@@ -113,6 +126,9 @@ namespace EducGramming.Views
                 // Scale down animation
                 await resetButton.ScaleTo(0.95, 100, Easing.CubicInOut);
                 
+                // Send password reset email
+                await _authService.SendPasswordResetEmailAsync(usernameEntry.Text);
+                
                 // Simulate reset delay
                 await Task.Delay(1000);
 
@@ -120,13 +136,25 @@ namespace EducGramming.Views
                 await resetButton.ScaleTo(1, 100, Easing.CubicInOut);
 
                 // Show success message
-                await DisplayAlert("Success", "Password reset successful!", "OK");
+                await DisplayAlert("Success", "Password reset email has been sent to your email address. Please check your inbox to complete the password reset process.", "OK");
                 
                 // Fade out animation before navigation
                 await MainContent.FadeTo(0, 200, Easing.CubicIn);
                 
-                // Navigate back to login
-                await Shell.Current.GoToAsync("..");
+                // Navigate to login page
+                if (Shell.Current is LoginShell)
+                {
+                    // Navigate within LoginShell
+                    await Shell.Current.GoToAsync("//login");
+                }
+                else
+                {
+                    // Switch to LoginShell and set it as main page
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        Application.Current.MainPage = new LoginShell();
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -142,7 +170,21 @@ namespace EducGramming.Views
         {
             // Fade out animation
             await MainContent.FadeTo(0, 200, Easing.CubicIn);
-            await Shell.Current.GoToAsync("..");
+            
+            // Check if we need to navigate within the current shell or switch shells
+            if (Shell.Current is LoginShell)
+            {
+                // Navigate within LoginShell
+                await Shell.Current.GoToAsync("//login");
+            }
+            else
+            {
+                // Switch to LoginShell and set it as main page
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    Application.Current.MainPage = new LoginShell();
+                });
+            }
         }
     }
 } 

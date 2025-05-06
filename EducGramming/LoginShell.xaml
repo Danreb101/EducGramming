@@ -19,4 +19,8 @@
         Route="resetpassword"
         ContentTemplate="{DataTemplate local:ResetPasswordPage}" />
 
+    <ShellContent
+        Route="changepassword"
+        ContentTemplate="{DataTemplate local:ChangePasswordPage}" />
+
 </Shell> 

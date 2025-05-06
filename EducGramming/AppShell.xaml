@@ -5,9 +5,44 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:EducGramming.Views"
     Shell.FlyoutBehavior="Disabled"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarBackgroundColor="Black"
+    BackgroundColor="White">
 
-    <!-- Auth Flow -->
+    <!-- Main App TabBar - Exactly like in the screenshots -->
+    <TabBar>
+        <Tab Title="Home" Icon="home.png">
+            <ShellContent 
+                Route="home"
+                ContentTemplate="{DataTemplate local:HomePage}" />
+        </Tab>
+
+        <Tab Title="Lesson" Icon="lesson.png">
+            <ShellContent 
+                Route="lesson"
+                ContentTemplate="{DataTemplate local:LessonPage}" />
+        </Tab>
+
+        <Tab Title="Play" Icon="play.png">
+            <ShellContent 
+                Route="play"
+                ContentTemplate="{DataTemplate local:PlayPage}" />
+        </Tab>
+
+        <Tab Title="Leaderboard" Icon="leaderboard.png">
+            <ShellContent 
+                Route="leaderboard"
+                ContentTemplate="{DataTemplate local:LeaderboardPage}" />
+        </Tab>
+
+        <Tab Title="Profile" Icon="profile.png">
+            <ShellContent 
+                Route="profile"
+                ContentTemplate="{DataTemplate local:ProfilePage}" />
+        </Tab>
+    </TabBar>
+
+    <!-- Auth routes (these should not be visible in the tab bar) -->
     <ShellContent
         Route="login"
         ContentTemplate="{DataTemplate local:LoginPage}"
@@ -23,42 +58,8 @@
         ContentTemplate="{DataTemplate local:ResetPasswordPage}"
         FlyoutItemIsVisible="False" />
 
-    <!-- Main App -->
-    <TabBar>
-        <Tab Title="Home"
-             Icon="home.png">
-            <ShellContent
-                Route="home"
-                ContentTemplate="{DataTemplate local:HomePage}" />
-        </Tab>
-
-        <Tab Title="Lesson"
-             Icon="lesson.png">
-            <ShellContent
-                Route="lesson"
-                ContentTemplate="{DataTemplate local:LessonPage}" />
-        </Tab>
-
-        <Tab Title="Play"
-             Icon="play.png">
-            <ShellContent
-                Route="play"
-                ContentTemplate="{DataTemplate local:PlayPage}" />
-        </Tab>
-
-        <Tab Title="Leaderboard"
-             Icon="leaderboard.png">
-            <ShellContent
-                Route="leaderboard"
-                ContentTemplate="{DataTemplate local:LeaderboardPage}" />
-        </Tab>
-
-        <Tab Title="Profile"
-             Icon="profile.png">
-            <ShellContent
-                Route="profile"
-                ContentTemplate="{DataTemplate local:ProfilePage}" />
-        </Tab>
-    </TabBar>
-
+    <ShellContent
+        Route="changepassword"
+        ContentTemplate="{DataTemplate local:ChangePasswordPage}"
+        FlyoutItemIsVisible="False" />
 </Shell>

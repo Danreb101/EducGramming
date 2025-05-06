@@ -29,6 +29,7 @@ public static class MauiProgram
 
         // Register services
         builder.Services.AddSingleton<ILeaderboardService, LeaderboardService>();
+        builder.Services.AddSingleton<FirebaseAuthService>();
 
         // Register converters as singletons
         builder.Services.AddSingleton<BoolToColorConverter>();

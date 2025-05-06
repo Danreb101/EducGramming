@@ -3,21 +3,24 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Microsoft.Maui.Storage;
 using EducGramming.Services;
+using System.Diagnostics;
+using System.Linq;
+using EducGramming.Views;
+using Microsoft.Maui.Controls;
 
 namespace EducGramming.ViewModels
 {
     public class LoginViewModel : INotifyPropertyChanged
     {
-        private readonly UserService _userService;
+        private UserService _userService;
         private string? _email;
         private string? _password;
         private bool _isPasswordVisible = false;
-        private bool _isTermsAccepted;
         private bool _staySignedIn;
         private bool _isBusy;
+        private string _errorMessage;
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        public event EventHandler? ShowTermsRequested;
 
         public string? Email
         {
@@ -28,6 +31,7 @@ namespace EducGramming.ViewModels
                 {
                     _email = value;
                     OnPropertyChanged();
+                    ClearErrorMessage();
                 }
             }
         }
@@ -41,6 +45,7 @@ namespace EducGramming.ViewModels
                 {
                     _password = value;
                     OnPropertyChanged();
+                    ClearErrorMessage();
                 }
             }
         }
@@ -53,19 +58,6 @@ namespace EducGramming.ViewModels
                 if (_isPasswordVisible != value)
                 {
                     _isPasswordVisible = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public bool IsTermsAccepted
-        {
-            get => _isTermsAccepted;
-            set
-            {
-                if (_isTermsAccepted != value)
-                {
-                    _isTermsAccepted = value;
                     OnPropertyChanged();
                 }
             }
@@ -97,11 +89,23 @@ namespace EducGramming.ViewModels
             }
         }
 
+        public string ErrorMessage
+        {
+            get => _errorMessage;
+            set
+            {
+                if (_errorMessage != value)
+                {
+                    _errorMessage = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public ICommand SignInCommand { get; private set; }
         public ICommand TogglePasswordCommand { get; private set; }
         public ICommand RegisterCommand { get; private set; }
         public ICommand ForgotPasswordCommand { get; private set; }
-        public ICommand ShowTermsCommand { get; private set; }
 
         public LoginViewModel()
         {
@@ -110,15 +114,9 @@ namespace EducGramming.ViewModels
             TogglePasswordCommand = new Command(TogglePassword);
             RegisterCommand = new Command(async () => await NavigateToRegister());
             ForgotPasswordCommand = new Command(async () => await NavigateToResetPassword());
-            ShowTermsCommand = new Command(ShowTerms);
 
             // Clear any existing credentials
             ClearSavedCredentials();
-        }
-
-        private void ShowTerms()
-        {
-            ShowTermsRequested?.Invoke(this, EventArgs.Empty);
         }
 
         private async Task SignInAsync()
@@ -127,49 +125,81 @@ namespace EducGramming.ViewModels
 
             if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
             {
-                await Application.Current.MainPage.DisplayAlert("Error", "Please enter both email and password", "OK");
-                return;
-            }
-
-            if (!IsTermsAccepted)
-            {
-                await Application.Current.MainPage.DisplayAlert("Error", "Please accept the Terms and Conditions", "OK");
+                ErrorMessage = "Please enter both email and password";
+                await Application.Current.MainPage.DisplayAlert("Error", ErrorMessage, "OK");
                 return;
             }
 
             try
             {
                 IsBusy = true;
+                Debug.WriteLine($"Attempting to sign in with email: {Email}");
+
+                // Clear any previous error message
+                ErrorMessage = string.Empty;
 
                 // Validate login credentials
                 bool isValid = await _userService.ValidateLogin(Email, Password);
                 
                 if (!isValid)
                 {
-                    await Application.Current.MainPage.DisplayAlert("Error", "Invalid email or password", "OK");
-                    Password = string.Empty; // Clear password for security
+                    // Try to get all users to check if the email exists
+                    var users = await _userService.GetAllUsers();
+                    var userExists = users.Any(u => u.Email.Equals(Email, StringComparison.OrdinalIgnoreCase));
+
+                    if (!userExists)
+                    {
+                        ErrorMessage = "No account found with this email address";
+                    }
+                    else
+                    {
+                        ErrorMessage = "Incorrect password";
+                    }
+
+                    Debug.WriteLine($"Login validation failed: {ErrorMessage}");
+                    await Application.Current.MainPage.DisplayAlert("Login Failed", ErrorMessage, "OK");
+                    
+                    if (!userExists)
+                    {
+                        // Clear both email and password if user doesn't exist
+                        Email = string.Empty;
+                        Password = string.Empty;
+                    }
+                    else
+                    {
+                        // Only clear password if user exists but password is wrong
+                        Password = string.Empty;
+                    }
                     return;
                 }
 
-                // Save whether to remember email
+                Debug.WriteLine("Login successful");
+
+                // Save stay signed in preference and user credentials
+                Preferences.Default.Set("StaySignedIn", StaySignedIn);
+                
                 if (StaySignedIn)
                 {
+                    // Save all necessary credentials
                     Preferences.Default.Set("LastUsedEmail", Email);
-                    Preferences.Default.Set("RememberEmail", true);
+                    Debug.WriteLine("Saved login preferences for stay signed in");
                 }
                 else
                 {
+                    // Only remove the stay signed in related preferences
                     Preferences.Default.Remove("LastUsedEmail");
-                    Preferences.Default.Set("RememberEmail", false);
+                    Debug.WriteLine("Cleared stay signed in preferences");
                 }
                 
-                // Navigate to main app by switching the entire shell
+                // NAVIGATION: To full app with tabs
+                Debug.WriteLine("Navigating to full app with tabs (AppShell)");
                 Application.Current.MainPage = new AppShell();
-                await Shell.Current.GoToAsync("///home");
             }
             catch (Exception ex)
             {
-                await Application.Current.MainPage.DisplayAlert("Error", "Login failed: " + ex.Message, "OK");
+                Debug.WriteLine($"Login error: {ex.Message}");
+                ErrorMessage = $"Login failed: {ex.Message}";
+                await Application.Current.MainPage.DisplayAlert("Error", ErrorMessage, "OK");
             }
             finally
             {
@@ -184,45 +214,80 @@ namespace EducGramming.ViewModels
 
         private void ClearSavedCredentials()
         {
-            // Clear all saved credentials
-            Preferences.Default.Remove("LastUsedEmail");
-            Preferences.Default.Remove("RememberEmail");
-            Preferences.Default.Remove("CurrentEmail");
-            
-            // Reset view model properties
-            Email = string.Empty;
-            Password = string.Empty;
-            StaySignedIn = false;
-            IsTermsAccepted = false;
+            try
+            {
+                // Clear all saved credentials
+                Preferences.Default.Remove("LastUsedEmail");
+                Preferences.Default.Remove("RememberEmail");
+                Preferences.Default.Remove("CurrentEmail");
+                Debug.WriteLine("Cleared saved credentials");
+                
+                // Reset view model properties
+                Email = string.Empty;
+                Password = string.Empty;
+                StaySignedIn = false;
+                ErrorMessage = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error clearing credentials: {ex.Message}");
+            }
+        }
+
+        private void ClearErrorMessage()
+        {
+            ErrorMessage = string.Empty;
         }
 
         private async Task NavigateToRegister()
         {
+            if (IsBusy) return;
+
             try
             {
+                IsBusy = true;
                 await Shell.Current.GoToAsync("//register");
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"Navigation error: {ex.Message}");
                 await Application.Current.MainPage.DisplayAlert("Error", "Navigation failed: " + ex.Message, "OK");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
         private async Task NavigateToResetPassword()
         {
+            if (IsBusy) return;
+
             try
             {
+                IsBusy = true;
                 await Shell.Current.GoToAsync("//resetpassword");
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"Navigation error: {ex.Message}");
                 await Application.Current.MainPage.DisplayAlert("Error", "Navigation failed: " + ex.Message, "OK");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (PropertyChanged != null)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+                });
+            }
         }
     }
 } 

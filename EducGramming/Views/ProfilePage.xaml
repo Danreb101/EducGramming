@@ -15,7 +15,7 @@
                    HasShadow="True"
                    Padding="20"
                    BorderColor="Transparent">
-                <VerticalStackLayout Spacing="10">
+                <VerticalStackLayout x:Name="ProfileHeaderSection" Spacing="10">
                     <!-- Profile Picture -->
                     <Frame CornerRadius="50"
                            HeightRequest="100"
@@ -28,14 +28,15 @@
                     
                     <!-- User Info -->
                     <VerticalStackLayout Spacing="5" HorizontalOptions="Center">
+                        <Label Text="My Profile"
+                               TextColor="#333333"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
                         <Label Text="{Binding FullName}"
                                TextColor="#007AFF"
                                FontSize="20"
                                FontAttributes="Bold"
-                               HorizontalOptions="Center"/>
-                        <Label Text="{Binding Username}"
-                               TextColor="#666666"
-                               FontSize="16"
                                HorizontalOptions="Center"/>
                         <Label Text="{Binding Email}"
                                TextColor="#666666"
@@ -62,7 +63,7 @@
                     <Label Text="{Binding HighScore, StringFormat='High Score: {0}'}"
                            TextColor="#666666"
                            FontSize="14"/>
-                    <Label Text="{Binding TimeSpeed, StringFormat='Time spent (in seconds): {0}'}"
+                    <Label Text="{Binding TimeSpent, StringFormat='Time spent (in seconds): {0}'}"
                            TextColor="#666666"
                            FontSize="14"/>
                 </VerticalStackLayout>
