@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="EducGramming.Views.VideoPlayerPage"
+             BackgroundColor="#0A1128">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20">
+        <!-- Header with Title and Close Button -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,20,0,15">
+            <VerticalStackLayout Grid.Column="0" Spacing="8">
+                <Label x:Name="TitleLabel"
+                       Text="Video Title"
+                       TextColor="White"
+                       FontSize="24"
+                       FontAttributes="Bold"/>
+                <Label x:Name="DescriptionLabel"
+                       Text="Video Description"
+                       TextColor="#B0B0B0"
+                       FontSize="16"
+                       MaxLines="2"
+                       LineBreakMode="TailTruncation"/>
+            </VerticalStackLayout>
+            
+            <Button Grid.Column="1"
+                    Text="Close"
+                    Clicked="OnCloseClicked"
+                    BackgroundColor="#1B3B6F"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="12"
+                    HeightRequest="40"
+                    WidthRequest="100"
+                    Margin="10,0,0,0">
+                <Button.Shadow>
+                    <Shadow Brush="#000000"
+                           Offset="0,4"
+                           Radius="8"
+                           Opacity="0.2"/>
+                </Button.Shadow>
+            </Button>
+        </Grid>
+
+        <!-- Video Player Container -->
+        <Border Grid.Row="1"
+                StrokeShape="RoundRectangle 16"
+                Stroke="#3B5B8F"
+                StrokeThickness="1"
+                BackgroundColor="#1B3B6F"
+                Margin="0,10">
+            <Border.Shadow>
+                <Shadow Brush="#000000"
+                       Offset="0,4"
+                       Radius="12"
+                       Opacity="0.3"/>
+            </Border.Shadow>
+            <Grid>
+                <ActivityIndicator IsRunning="True"
+                                 IsVisible="True"
+                                 Color="White"
+                                 HeightRequest="50"
+                                 WidthRequest="50"/>
+                <WebView x:Name="VideoPlayer"
+                        BackgroundColor="Transparent"/>
+            </Grid>
+        </Border>
+
+        <!-- Additional Controls -->
+        <HorizontalStackLayout Grid.Row="2"
+                              Spacing="15"
+                              HorizontalOptions="Center"
+                              Margin="0,10,0,0">
+            <Button Text="Previous"
+                    BackgroundColor="#1B3B6F"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="12"
+                    HeightRequest="45"
+                    WidthRequest="120"
+                    IsEnabled="False">
+                <Button.Shadow>
+                    <Shadow Brush="#000000"
+                           Offset="0,4"
+                           Radius="8"
+                           Opacity="0.2"/>
+                </Button.Shadow>
+            </Button>
+            
+            <Button Text="Next"
+                    BackgroundColor="#4B0082"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="12"
+                    HeightRequest="45"
+                    WidthRequest="120"
+                    IsEnabled="False">
+                <Button.Shadow>
+                    <Shadow Brush="#000000"
+                           Offset="0,4"
+                           Radius="8"
+                           Opacity="0.2"/>
+                </Button.Shadow>
+            </Button>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage> 

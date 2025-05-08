@@ -1,110 +1,282 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:EducGramming.ViewModels"
              x:Class="EducGramming.Views.LessonPage"
+             x:DataType="viewmodels:LessonViewModel"
              BackgroundColor="#0A1128">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
         <!-- Header -->
-        <Grid Grid.Row="0" BackgroundColor="#007AFF" Padding="20,15">
-            <Label Text="Lesson"
-                   FontSize="24"
+        <Grid Grid.Row="0" 
+              Padding="24,20"
+              ColumnDefinitions="*,Auto"
+              BackgroundColor="#1B3B6F">
+            
+            <Label Text="Lessons"
                    TextColor="White"
+                   FontSize="32"
                    FontAttributes="Bold"
-                   HorizontalOptions="Start"
                    VerticalOptions="Center"/>
+
+            <Border Grid.Column="1"
+                    Stroke="#3B5B8F"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 12"
+                    BackgroundColor="#2C4C80"
+                    Padding="8,0"
+                    MinimumWidthRequest="120">
+                <Picker Title="Select Language"
+                        TitleColor="White"
+                        TextColor="White"
+                        BackgroundColor="Transparent"
+                        SelectedItem="{Binding SelectedLanguage}"
+                        FontSize="16">
+                    <Picker.Items>
+                        <x:String>C#</x:String>
+                        <x:String>Java</x:String>
+                    </Picker.Items>
+                </Picker>
+            </Border>
         </Grid>
 
-        <!-- Main Content -->
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="20" Padding="20">
-                <!-- Video Player Section -->
-                <Frame BackgroundColor="#1A1A1A"
-                       CornerRadius="15"
-                       HasShadow="True"
-                       HeightRequest="220"
-                       Padding="0">
-                    <Grid>
-                        <!-- Video Placeholder -->
-                        <Image Source="playvideo.png"
-                               Aspect="AspectFill"/>
-                        
-                        <!-- Play Button -->
-                        <Button ImageSource="play.png"
-                                BackgroundColor="#FF0000"
-                                WidthRequest="60"
-                                HeightRequest="60"
-                                CornerRadius="30"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center"
-                                Command="{Binding PlayVideoCommand}"/>
+        <!-- Tab Buttons -->
+        <Border Grid.Row="1" 
+                BackgroundColor="#4B0082"
+                Stroke="Transparent"
+                Padding="24,0">
+            <HorizontalStackLayout Spacing="4">
+                <Button Text="Lessons"
+                        HeightRequest="48"
+                        Padding="24,0"
+                        BackgroundColor="{Binding CurrentTab, Converter={StaticResource TabToColorConverter}, ConverterParameter=Lessons}"
+                        TextColor="White"
+                        Command="{Binding ChangeTabCommand}"
+                        CommandParameter="Lessons"
+                        FontAttributes="Bold"
+                        FontSize="16"
+                        CornerRadius="8"/>
+                <Button Text="Videos"
+                        HeightRequest="48"
+                        Padding="24,0"
+                        BackgroundColor="{Binding CurrentTab, Converter={StaticResource TabToColorConverter}, ConverterParameter=Videos}"
+                        TextColor="White"
+                        Command="{Binding ChangeTabCommand}"
+                        CommandParameter="Videos"
+                        FontAttributes="Bold"
+                        FontSize="16"
+                        CornerRadius="8"/>
+                <Button Text="Quizzes"
+                        HeightRequest="48"
+                        Padding="24,0"
+                        BackgroundColor="{Binding CurrentTab, Converter={StaticResource TabToColorConverter}, ConverterParameter=Quizzes}"
+                        TextColor="White"
+                        Command="{Binding ChangeTabCommand}"
+                        CommandParameter="Quizzes"
+                        FontAttributes="Bold"
+                        FontSize="16"
+                        CornerRadius="8"/>
+            </HorizontalStackLayout>
+        </Border>
 
-                        <!-- Video Controls -->
-                        <Grid RowDefinitions="*,Auto" 
-                              IsVisible="{Binding IsVideoPlaying}"
-                              BackgroundColor="#80000000">
-                            
-                            <!-- Progress Bar -->
-                            <Slider Grid.Row="1"
-                                    Margin="10,0"
-                                    Value="{Binding VideoProgress}"
-                                    Maximum="100"
-                                    MinimumTrackColor="#FF0000"
-                                    MaximumTrackColor="#FFFFFF"/>
-                        </Grid>
-                    </Grid>
-                </Frame>
-
-                <!-- Lessons List -->
-                <Frame BackgroundColor="White"
-                       CornerRadius="15"
-                       HasShadow="True"
-                       Padding="0">
-                    <CollectionView ItemsSource="{Binding Lessons}"
-                                  SelectionMode="Single"
-                                  SelectedItem="{Binding SelectedLesson}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Padding="15,12"
-                                      ColumnDefinitions="Auto,*,Auto">
-                                    <!-- Lesson Number -->
-                                    <Frame Grid.Column="0"
-                                           BackgroundColor="{Binding IsCompleted, Converter={StaticResource BoolToColorConverter}}"
-                                           WidthRequest="40"
-                                           HeightRequest="40"
-                                           CornerRadius="20"
-                                           Padding="0"
-                                           Margin="0,0,15,0">
-                                        <Label Text="{Binding Number}"
-                                               TextColor="White"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center"
-                                               FontAttributes="Bold"/>
-                                    </Frame>
-
-                                    <!-- Lesson Title and Description -->
-                                    <VerticalStackLayout Grid.Column="1" Spacing="5">
-                                        <Label Text="{Binding Title}"
-                                               FontSize="16"
-                                               TextColor="#333333"
-                                               FontAttributes="Bold"/>
-                                        <Label Text="{Binding Description}"
-                                               FontSize="14"
-                                               TextColor="#666666"/>
-                                    </VerticalStackLayout>
-
-                                    <!-- Status Icon -->
-                                    <Image Grid.Column="2"
-                                           Source="{Binding IsCompleted, Converter={StaticResource BoolToIconConverter}}"
-                                           WidthRequest="24"
-                                           HeightRequest="24"
-                                           VerticalOptions="Center"/>
+        <!-- Content Area -->
+        <ScrollView Grid.Row="2">
+            <Grid Padding="24,16">
+                <!-- Lessons Content -->
+                <CollectionView ItemsSource="{Binding Lessons}"
+                              IsVisible="{Binding CurrentTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Lessons}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:LessonItem">
+                            <Border Margin="0,8"
+                                   StrokeShape="RoundRectangle 16"
+                                   BackgroundColor="#1B3B6F"
+                                   Stroke="#3B5B8F"
+                                   StrokeThickness="1">
+                                <Border.Shadow>
+                                    <Shadow Brush="#000000"
+                                           Offset="0,4"
+                                           Radius="8"
+                                           Opacity="0.2"/>
+                                </Border.Shadow>
+                                <Grid Padding="20" RowSpacing="8">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Label Text="{Binding Title}"
+                                           TextColor="White"
+                                           FontSize="22"
+                                           FontAttributes="Bold"/>
+                                    <Label Grid.Row="1"
+                                           Text="{Binding Description}"
+                                           TextColor="#B0B0B0"
+                                           FontSize="16"
+                                           LineBreakMode="WordWrap"/>
+                                    <Button Grid.Row="2"
+                                            Text="Start Learning"
+                                            BackgroundColor="#4B0082"
+                                            TextColor="White"
+                                            CornerRadius="8"
+                                            Margin="0,10,0,0"
+                                            HeightRequest="40"/>
                                 </Grid>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </Frame>
-            </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                    <CollectionView.EmptyView>
+                        <Grid VerticalOptions="Center" 
+                              Padding="20"
+                              RowSpacing="12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Image Source="empty_state.svg"
+                                   HeightRequest="120"
+                                   Aspect="AspectFit"
+                                   HorizontalOptions="Center"/>
+                            <Label Grid.Row="1"
+                                   Text="No lessons available yet"
+                                   TextColor="#B0B0B0"
+                                   FontSize="18"
+                                   HorizontalOptions="Center"/>
+                        </Grid>
+                    </CollectionView.EmptyView>
+                </CollectionView>
+
+                <!-- Videos Content -->
+                <CollectionView ItemsSource="{Binding Videos}"
+                              IsVisible="{Binding CurrentTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Videos}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:LessonItem">
+                            <Border Margin="0,8"
+                                   StrokeShape="RoundRectangle 16"
+                                   BackgroundColor="#1B3B6F"
+                                   Stroke="#3B5B8F"
+                                   StrokeThickness="1">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:LessonViewModel}}, Path=OpenVideoCommand}"
+                                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <Border.Shadow>
+                                    <Shadow Brush="#000000"
+                                           Offset="0,4"
+                                           Radius="8"
+                                           Opacity="0.2"/>
+                                </Border.Shadow>
+                                <Grid Padding="20" RowSpacing="8">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Label Text="{Binding Title}"
+                                           TextColor="White"
+                                           FontSize="22"
+                                           FontAttributes="Bold"/>
+                                    <Label Grid.Row="1"
+                                           Text="{Binding Description}"
+                                           TextColor="#B0B0B0"
+                                           FontSize="16"
+                                           LineBreakMode="WordWrap"/>
+                                    <Button Grid.Row="2"
+                                            Text="Watch Video"
+                                            BackgroundColor="#4B0082"
+                                            TextColor="White"
+                                            CornerRadius="8"
+                                            Margin="0,10,0,0"
+                                            HeightRequest="40"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:LessonViewModel}}, Path=OpenVideoCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                    <CollectionView.EmptyView>
+                        <Grid VerticalOptions="Center" 
+                              Padding="20"
+                              RowSpacing="12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Image Source="empty_state.svg"
+                                   HeightRequest="120"
+                                   Aspect="AspectFit"
+                                   HorizontalOptions="Center"/>
+                            <Label Grid.Row="1"
+                                   Text="No videos available yet"
+                                   TextColor="#B0B0B0"
+                                   FontSize="18"
+                                   HorizontalOptions="Center"/>
+                        </Grid>
+                    </CollectionView.EmptyView>
+                </CollectionView>
+
+                <!-- Quizzes Content -->
+                <CollectionView ItemsSource="{Binding Quizzes}"
+                              IsVisible="{Binding CurrentTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Quizzes}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:LessonItem">
+                            <Border Margin="0,8"
+                                   StrokeShape="RoundRectangle 16"
+                                   BackgroundColor="#1B3B6F"
+                                   Stroke="#3B5B8F"
+                                   StrokeThickness="1">
+                                <Border.Shadow>
+                                    <Shadow Brush="#000000"
+                                           Offset="0,4"
+                                           Radius="8"
+                                           Opacity="0.2"/>
+                                </Border.Shadow>
+                                <Grid Padding="20" RowSpacing="8">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Label Text="{Binding Title}"
+                                           TextColor="White"
+                                           FontSize="22"
+                                           FontAttributes="Bold"/>
+                                    <Label Grid.Row="1"
+                                           Text="{Binding Description}"
+                                           TextColor="#B0B0B0"
+                                           FontSize="16"
+                                           LineBreakMode="WordWrap"/>
+                                    <Button Grid.Row="2"
+                                            Text="Start Quiz"
+                                            BackgroundColor="#4B0082"
+                                            TextColor="White"
+                                            CornerRadius="8"
+                                            Margin="0,10,0,0"
+                                            HeightRequest="40"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                    <CollectionView.EmptyView>
+                        <Grid VerticalOptions="Center" 
+                              Padding="20"
+                              RowSpacing="12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Image Source="empty_state.svg"
+                                   HeightRequest="120"
+                                   Aspect="AspectFit"
+                                   HorizontalOptions="Center"/>
+                            <Label Grid.Row="1"
+                                   Text="No quizzes available yet"
+                                   TextColor="#B0B0B0"
+                                   FontSize="18"
+                                   HorizontalOptions="Center"/>
+                        </Grid>
+                    </CollectionView.EmptyView>
+                </CollectionView>
+            </Grid>
         </ScrollView>
     </Grid>
 </ContentPage> 

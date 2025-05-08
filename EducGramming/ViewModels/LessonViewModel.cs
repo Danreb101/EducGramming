@@ -1,123 +1,191 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using EducGramming.Models;
-using Microsoft.Maui;
-using Microsoft.Maui.Storage;
-using Microsoft.Maui.Controls;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using EducGramming.Views;
 
 namespace EducGramming.ViewModels
 {
-    public class LessonViewModel : INotifyPropertyChanged
+    public class LessonItem
     {
-        private bool _isVideoPlaying;
-        private double _videoProgress;
-        private Lesson _selectedLesson;
-        private ObservableCollection<Lesson> _lessons;
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Language { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string VideoUrl { get; set; } = string.Empty;
+    }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+    public partial class LessonViewModel : ObservableObject
+    {
+        [ObservableProperty]
+        private string _selectedLanguage = "C#";
 
-        public bool IsVideoPlaying
-        {
-            get => _isVideoPlaying;
-            set
-            {
-                if (_isVideoPlaying != value)
-                {
-                    _isVideoPlaying = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        private string _currentTab = "Lessons";
 
-        public double VideoProgress
-        {
-            get => _videoProgress;
-            set
-            {
-                if (_videoProgress != value)
-                {
-                    _videoProgress = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        private ObservableCollection<LessonItem> _lessons = new();
 
-        public Lesson SelectedLesson
-        {
-            get => _selectedLesson;
-            set
-            {
-                if (_selectedLesson != value)
-                {
-                    _selectedLesson = value;
-                    OnPropertyChanged();
-                    LoadVideo();
-                }
-            }
-        }
+        [ObservableProperty]
+        private ObservableCollection<LessonItem> _videos = new();
 
-        public ObservableCollection<Lesson> Lessons
-        {
-            get => _lessons;
-            set
-            {
-                if (_lessons != value)
-                {
-                    _lessons = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public ICommand PlayVideoCommand { get; }
+        [ObservableProperty]
+        private ObservableCollection<LessonItem> _quizzes = new();
 
         public LessonViewModel()
         {
-            PlayVideoCommand = new Command(PlayVideo);
-            InitializeLessons();
+            LoadContent();
         }
 
-        private void InitializeLessons()
+        [RelayCommand]
+        private void ChangeTab(string tabName)
         {
-            Lessons = new ObservableCollection<Lesson>
+            CurrentTab = tabName;
+        }
+
+        [RelayCommand]
+        private async Task OpenVideo(LessonItem video)
+        {
+            if (video == null || string.IsNullOrEmpty(video.VideoUrl)) return;
+
+            try
             {
-                new Lesson { Number = 1, Title = "Introduction to Programming", Description = "Learn the basics of programming concepts", VideoUrl = "video1.mp4", IsCompleted = true },
-                new Lesson { Number = 2, Title = "Variables and Data Types", Description = "Understanding different types of data", VideoUrl = "video2.mp4", IsCompleted = true },
-                new Lesson { Number = 3, Title = "Control Structures", Description = "If statements and loops", VideoUrl = "video3.mp4", IsCompleted = false },
-                new Lesson { Number = 4, Title = "Functions and Methods", Description = "Creating reusable code blocks", VideoUrl = "video4.mp4", IsCompleted = false },
-                new Lesson { Number = 5, Title = "Object-Oriented Programming", Description = "Classes and objects", VideoUrl = "video5.mp4", IsCompleted = false },
-                new Lesson { Number = 6, Title = "Advanced Topics", Description = "Advanced programming concepts", VideoUrl = "video6.mp4", IsCompleted = false }
-            };
-        }
-
-        private void PlayVideo()
-        {
-            if (SelectedLesson == null) return;
-
-            IsVideoPlaying = !IsVideoPlaying;
-            // TODO: Implement actual video playback
-        }
-
-        private void LoadVideo()
-        {
-            if (SelectedLesson == null) return;
-
-            VideoProgress = 0;
-            IsVideoPlaying = false;
-            // TODO: Load the video for the selected lesson
-        }
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            if (PropertyChanged != null)
-            {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-                });
+                var videoPlayer = new VideoPlayerPage(video.Title, video.Description, video.VideoUrl);
+                await Application.Current.MainPage.Navigation.PushModalAsync(videoPlayer);
             }
+            catch (Exception ex)
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Could not play video: " + ex.Message, "OK");
+            }
+        }
+
+        private void LoadContent()
+        {
+            // Clear existing collections
+            Lessons.Clear();
+            Videos.Clear();
+            Quizzes.Clear();
+
+            if (SelectedLanguage == "C#")
+            {
+                LoadCSharpContent();
+            }
+            else
+            {
+                LoadJavaContent();
+            }
+        }
+
+        private void LoadCSharpContent()
+        {
+            // Add C# lessons
+            Lessons.Add(new LessonItem 
+            { 
+                Title = "Introduction to C#",
+                Description = "Learn the basics of C# programming including variables, data types, and control structures.",
+                Language = "C#",
+                Type = "Lesson"
+            });
+            Lessons.Add(new LessonItem 
+            { 
+                Title = "Object-Oriented Programming in C#",
+                Description = "Understanding classes, objects, inheritance, and polymorphism in C#.",
+                Language = "C#",
+                Type = "Lesson"
+            });
+
+            // Add C# videos
+            Videos.Add(new LessonItem
+            {
+                Title = "C# Variables and Types",
+                Description = "A comprehensive guide to variables and data types in C#",
+                Language = "C#",
+                Type = "Video",
+                VideoUrl = Path.Combine(FileSystem.AppDataDirectory, "Videos", "Csharp", "variables.mp4")
+            });
+            Videos.Add(new LessonItem
+            {
+                Title = "C# Control Structures",
+                Description = "Learn about if statements, loops, and switch cases in C#",
+                Language = "C#",
+                Type = "Video",
+                VideoUrl = Path.Combine(FileSystem.AppDataDirectory, "Videos", "Csharp", "control-structures.mp4")
+            });
+
+            // Add C# quizzes
+            Quizzes.Add(new LessonItem
+            {
+                Title = "C# Basics Quiz",
+                Description = "Test your knowledge of C# fundamentals",
+                Language = "C#",
+                Type = "Quiz"
+            });
+            Quizzes.Add(new LessonItem
+            {
+                Title = "C# OOP Quiz",
+                Description = "Test your understanding of Object-Oriented Programming in C#",
+                Language = "C#",
+                Type = "Quiz"
+            });
+        }
+
+        private void LoadJavaContent()
+        {
+            // Add Java lessons
+            Lessons.Add(new LessonItem 
+            { 
+                Title = "Introduction to Java",
+                Description = "Learn the basics of Java programming including variables, data types, and control structures.",
+                Language = "Java",
+                Type = "Lesson"
+            });
+            Lessons.Add(new LessonItem 
+            { 
+                Title = "Object-Oriented Programming in Java",
+                Description = "Understanding classes, objects, inheritance, and polymorphism in Java.",
+                Language = "Java",
+                Type = "Lesson"
+            });
+
+            // Add Java videos
+            Videos.Add(new LessonItem
+            {
+                Title = "Java Variables and Types",
+                Description = "A comprehensive guide to variables and data types in Java",
+                Language = "Java",
+                Type = "Video",
+                VideoUrl = Path.Combine(FileSystem.AppDataDirectory, "Videos", "Java", "variables.mp4")
+            });
+            Videos.Add(new LessonItem
+            {
+                Title = "Java Control Structures",
+                Description = "Learn about if statements, loops, and switch cases in Java",
+                Language = "Java",
+                Type = "Video",
+                VideoUrl = Path.Combine(FileSystem.AppDataDirectory, "Videos", "Java", "control-structures.mp4")
+            });
+
+            // Add Java quizzes
+            Quizzes.Add(new LessonItem
+            {
+                Title = "Java Basics Quiz",
+                Description = "Test your knowledge of Java fundamentals",
+                Language = "Java",
+                Type = "Quiz"
+            });
+            Quizzes.Add(new LessonItem
+            {
+                Title = "Java OOP Quiz",
+                Description = "Test your understanding of Object-Oriented Programming in Java",
+                Language = "Java",
+                Type = "Quiz"
+            });
+        }
+
+        partial void OnSelectedLanguageChanged(string value)
+        {
+            LoadContent();
         }
     }
 } 

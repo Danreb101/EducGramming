@@ -5,6 +5,8 @@ using EducGramming.Services;
 using EducGramming.Converters;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
+using CommunityToolkit.Maui;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EducGramming;
 
@@ -15,17 +17,12 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
-
-        // Configure handlers
-        builder.ConfigureMauiHandlers(handlers =>
-        {
-            // Add any custom handlers here if needed
-        });
 
         // Register services
         builder.Services.AddSingleton<ILeaderboardService, LeaderboardService>();
@@ -36,6 +33,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<BoolToIconConverter>();
         builder.Services.AddSingleton<InverseBoolConverter>();
         builder.Services.AddSingleton<IntToHeartVisibilityConverter>();
+        builder.Services.AddSingleton<TabToColorConverter>();
+        builder.Services.AddSingleton<StringEqualsConverter>();
 
         // Register view models
         builder.Services.AddTransient<LoginViewModel>();
@@ -57,6 +56,7 @@ public static class MauiProgram
         builder.Services.AddTransient<PlayPage>();
         builder.Services.AddTransient<LeaderboardPage>();
         builder.Services.AddTransient<ProfilePage>();
+        builder.Services.AddTransient<VideoPlayerPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();
