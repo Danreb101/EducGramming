@@ -246,6 +246,13 @@ namespace EducGramming.ViewModels
             Score = 0;
             TimeRemaining = 30;
             IsGameOver = false;
+            
+            // Reset heart scales and animations
+            Heart1Scale = 1.0;
+            Heart2Scale = 1.0;
+            Heart3Scale = 1.0;
+            IsHeartAnimating = false;
+            
             LoadNextQuestion();
             _timer.Start();
         }

@@ -51,8 +51,34 @@ public partial class PlayPage : ContentPage
                     );
                 }
             }
+            else if (currentLives > _previousLives)
+            {
+                // Reset heart visibility and opacity when lives are restored
+                switch (currentLives)
+                {
+                    case 3:
+                        await ResetHeart(Heart3);
+                        await ResetHeart(Heart2);
+                        await ResetHeart(Heart1);
+                        break;
+                    case 2:
+                        await ResetHeart(Heart2);
+                        await ResetHeart(Heart1);
+                        break;
+                    case 1:
+                        await ResetHeart(Heart1);
+                        break;
+                }
+            }
             _previousLives = currentLives;
         }
+    }
+
+    private async Task ResetHeart(Label heart)
+    {
+        heart.Scale = 1.0;
+        heart.Opacity = 1.0;
+        await heart.FadeTo(1, 300);
     }
 
     private void OnDragStarting(object sender, DragStartingEventArgs e)
