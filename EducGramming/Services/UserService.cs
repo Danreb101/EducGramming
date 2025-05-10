@@ -71,96 +71,36 @@ namespace EducGramming.Services
         {
             try
             {
-                Debug.WriteLine($"===== UserService.ValidateLogin started =====");
-                Debug.WriteLine($"UserService - Attempting login for email: {email}");
-                
-                // Try to sign in with Firebase first
-                try
+                // Ensure Firebase auth service exists
+                if (_firebaseAuthService == null)
                 {
-                    Debug.WriteLine("UserService - Attempting Firebase login");
-                    
-                    // Make sure we have a Firebase auth service
-                    if (_firebaseAuthService == null)
-                    {
-                        Debug.WriteLine("UserService - Creating new FirebaseAuthService");
-                        _firebaseAuthService = new FirebaseAuthService();
-                    }
-                    
-                    var firebaseUser = await _firebaseAuthService.SignIn(email, password);
-                    Debug.WriteLine("UserService - Firebase login successful");
-                    
-                    // If Firebase login is successful, get the user's full profile from local storage
+                    _firebaseAuthService = new FirebaseAuthService();
+                }
+
+                // Direct Firebase authentication
+                var firebaseUser = await _firebaseAuthService.SignIn(email, password);
+                
+                // Store minimal info
+                Preferences.Default.Set("CurrentEmail", email);
+                
+                // Get user profile in background
+                _ = Task.Run(async () => {
                     var users = await GetAllUsers();
                     var user = users.FirstOrDefault(u => 
                         u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-                    
-                    // Store current user info from Firebase and local profile
-                    Preferences.Default.Set("CurrentEmail", email);
-                    Debug.WriteLine($"UserService - Stored email in preferences: {email}");
-                    
-                    // If we have local profile data, use it
+                        
                     if (user != null)
                     {
-                        Debug.WriteLine($"UserService - Found user in local storage: {user.Username}");
                         Preferences.Default.Set("CurrentUsername", user.Username);
                         Preferences.Default.Set("CurrentFullName", user.FullName);
                     }
-                    
-                    Debug.WriteLine("===== UserService.ValidateLogin returned TRUE (Firebase) =====");
-                    return true;
-                }
-                catch (Exception firebaseEx)
-                {
-                    Debug.WriteLine($"UserService - Firebase login failed: {firebaseEx.Message}");
-                    
-                    // Only proceed with local validation for test accounts or if Firebase is unavailable
-                    var users = await GetAllUsers();
-                    var user = users.FirstOrDefault(u => 
-                        u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-                    
-                    // Special handling for test account
-                    if (email.ToLower() == "test123@gmail.com" && password == "test123")
-                    {
-                        Debug.WriteLine("UserService - Test account login successful");
-                        return true;
-                    }
-                    
-                    // For all other accounts, if Firebase fails and the password doesn't match, deny access
-                    if (user != null)
-                    {
-                        Debug.WriteLine($"UserService - Found matching user in local storage: {user.Email}");
-                        
-                        if (user.Password.Equals(password))
-                        {
-                            Debug.WriteLine("UserService - Local login successful as fallback");
-                            
-                            // Store user info locally
-                            Preferences.Default.Set("CurrentEmail", user.Email);
-                            Preferences.Default.Set("CurrentUsername", user.Username);
-                            Preferences.Default.Set("CurrentFullName", user.FullName);
-                            
-                            Debug.WriteLine("===== UserService.ValidateLogin returned TRUE (Local) =====");
-                            return true;
-                        }
-                        else
-                        {
-                            Debug.WriteLine("UserService - Local password mismatch");
-                            throw new Exception("Incorrect password");
-                        }
-                    }
-                    else
-                    {
-                        Debug.WriteLine("UserService - User not found in local storage");
-                        throw new Exception("No account found with this email address");
-                    }
-                }
+                });
+
+                return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.WriteLine($"UserService - Error validating login: {ex.Message}");
-                Debug.WriteLine($"UserService - Stack trace: {ex.StackTrace}");
-                Debug.WriteLine("===== UserService.ValidateLogin returned FALSE (Exception) =====");
-                throw; // Rethrow the exception to be handled by the UI
+                throw;
             }
         }
 

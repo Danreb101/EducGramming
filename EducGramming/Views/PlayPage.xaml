@@ -45,20 +45,20 @@
                                Text="❤"
                                FontSize="26"
                                TextColor="#FF3B30"
-                               Scale="{Binding Heart1Scale}"
-                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=1}"/>
+                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=1}"
+                               Opacity="1"/>
                         <Label x:Name="Heart2"
                                Text="❤"
                                FontSize="26"
                                TextColor="#FF3B30"
-                               Scale="{Binding Heart2Scale}"
-                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=2}"/>
+                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=2}"
+                               Opacity="1"/>
                         <Label x:Name="Heart3"
                                Text="❤"
                                FontSize="26"
                                TextColor="#FF3B30"
-                               Scale="{Binding Heart3Scale}"
-                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=3}"/>
+                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=3}"
+                               Opacity="1"/>
                     </HorizontalStackLayout>
                 </Frame>
 
@@ -139,11 +139,13 @@
             <Label Grid.Row="1"
                    Text="{Binding FeedbackMessage}"
                    TextColor="{Binding IsWrongAnswer, Converter={StaticResource BoolToColorConverter}}"
-                   FontSize="18"
+                   FontSize="20"
                    FontAttributes="Bold"
                    HorizontalOptions="Center"
+                   VerticalOptions="Center"
                    Margin="0,10"
-                   IsVisible="{Binding FeedbackMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+                   IsVisible="{Binding FeedbackMessage, Converter={StaticResource StringToVisibilityConverter}}"
+                   HorizontalTextAlignment="Center"/>
 
             <!-- Answer Options Section -->
             <VerticalStackLayout Grid.Row="2" 

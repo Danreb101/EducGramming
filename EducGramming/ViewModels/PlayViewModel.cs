@@ -228,32 +228,46 @@ namespace EducGramming.ViewModels
             }
             else
             {
-                Lives = Math.Max(0, Lives - 1);
-                if (Lives <= 0)
+                if (Lives > 0)
                 {
-                    EndGame();
-                }
-                else
-                {
-                    LoadNextQuestion();
+                    Lives--;
+                    if (Lives <= 0)
+                    {
+                        EndGame();
+                    }
+                    else
+                    {
+                        LoadNextQuestion();
+                        TimeRemaining = 30; // Reset timer for next question
+                    }
                 }
             }
         }
 
         private void InitializeGame()
         {
+            // Reset all game state
             Lives = 3;
             Score = 0;
             TimeRemaining = 30;
             IsGameOver = false;
+            IsWrongAnswer = false;
+            LastWrongAnswer = "";
+            FeedbackMessage = "";
             
-            // Reset heart scales and animations
+            // Explicitly reset heart scales and visibility
             Heart1Scale = 1.0;
             Heart2Scale = 1.0;
             Heart3Scale = 1.0;
             IsHeartAnimating = false;
             
+            // Force property change notification for Lives to update heart visibility
+            OnPropertyChanged(nameof(Lives));
+            
+            // Load first question
             LoadNextQuestion();
+            
+            // Start the timer
             _timer.Start();
         }
 
@@ -301,80 +315,74 @@ namespace EducGramming.ViewModels
 
             if (answer == _correctAnswer)
             {
+                IsWrongAnswer = false;  // This will make the feedback green
                 Score += 1;
-                FeedbackMessage = "Correct!";
-                await Task.Delay(300);
+                FeedbackMessage = "Correct Answer";
+                await Task.Delay(1000); // Show feedback for 1 second
                 LoadNextQuestion();
             }
             else
             {
-                IsWrongAnswer = true;
+                IsWrongAnswer = true;  // This will make the feedback red
                 LastWrongAnswer = answer;
-                FeedbackMessage = "Wrong Answer!";
+                FeedbackMessage = "Wrong Answer";
                 
                 // Decrease lives immediately and wait for animation
                 await HandleWrongAnswer();
                 
+                // Keep wrong answer feedback visible for a moment before resetting
+                await Task.Delay(1000);
                 IsWrongAnswer = false;
             }
         }
 
         private async Task HandleWrongAnswer()
         {
-            Lives--;
-            await AnimateHearts();
-            
-            if (Lives <= 0)
+            if (Lives > 0)
             {
-                IsGameOver = true;
-                SaveHighScore();
-            }
-            else
-            {
-                LoadNextQuestion();
-            }
-        }
-
-        private async Task AnimateHearts()
-        {
-            // Animate all visible hearts
-            var tasks = new List<Task>();
-            
-            if (Lives >= 0)
-            {
-                tasks.Add(AnimateHeart(1));
-                if (Lives >= 1) tasks.Add(AnimateHeart(2));
-                if (Lives >= 2) tasks.Add(AnimateHeart(3));
-            }
-            
-            await Task.WhenAll(tasks);
-        }
-
-        private async Task AnimateHeart(int heartNumber)
-        {
-            switch (heartNumber)
-            {
-                case 1:
-                    Heart1Scale = 1.5;
-                    await Task.Delay(100);
-                    Heart1Scale = 1.0;
-                    break;
-                case 2:
-                    Heart2Scale = 1.5;
-                    await Task.Delay(100);
-                    Heart2Scale = 1.0;
-                    break;
-                case 3:
-                    Heart3Scale = 1.5;
-                    await Task.Delay(100);
-                    Heart3Scale = 1.0;
-                    break;
+                Lives--;  // This will trigger the animation in PlayPage.xaml.cs
+                
+                await Task.Delay(1000); // Show feedback message for 1 second
+                
+                if (Lives <= 0)
+                {
+                    EndGame();
+                    SaveHighScore();
+                }
+                else
+                {
+                    // Reset timer and load next question
+                    TimeRemaining = 30;
+                    LoadNextQuestion();
+                }
             }
         }
 
         private void RestartGame()
         {
-            InitializeGame();
+            _timer.Stop(); // Stop the current timer
+            
+            // Reset all game state
+            Lives = 3;
+            Score = 0;
+            TimeRemaining = 30;
+            IsGameOver = false;
+            IsWrongAnswer = false;
+            LastWrongAnswer = "";
+            FeedbackMessage = "";
+            
+            // Explicitly reset heart scales and visibility
+            Heart1Scale = 1.0;
+            Heart2Scale = 1.0;
+            Heart3Scale = 1.0;
+            IsHeartAnimating = false;
+            
+            // Force property change notification for Lives to update heart visibility
+            OnPropertyChanged(nameof(Lives));
+            
+            // Load new question and start timer
+            LoadNextQuestion();
+            _timer.Start();
         }
 
         private void CloseGame()

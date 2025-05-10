@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:EducGramming.ViewModels"
+             x:Class="EducGramming.Views.LessonMenuPage"
+             x:DataType="viewmodels:LessonViewModel"
+             BackgroundColor="#17212B">
+
+    <Grid WidthRequest="260" 
+          HorizontalOptions="Start"
+          BackgroundColor="#17212B">
+        <ScrollView>
+            <VerticalStackLayout Spacing="0">
+                <CollectionView ItemsSource="{Binding LessonSections}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:LessonSection">
+                            <Grid RowDefinitions="Auto,Auto">
+                                <!-- Section Header -->
+                                <Label Grid.Row="0"
+                                       Text="{Binding Title}"
+                                       TextColor="#8A8D91"
+                                       FontSize="13"
+                                       Margin="16,12,16,4"/>
+
+                                <!-- Lessons List -->
+                                <CollectionView Grid.Row="1"
+                                              ItemsSource="{Binding Lessons}">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="viewmodels:LessonItem">
+                                            <Grid x:Name="menuItem"
+                                                  BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#2B5278:#17212B}"
+                                                  HeightRequest="44">
+                                                <Grid.GestureRecognizers>
+                                                    <TapGestureRecognizer 
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:LessonViewModel}}, Path=SelectLessonCommand}"
+                                                        CommandParameter="{Binding .}"
+                                                        Tapped="OnMenuItemTapped"/>
+                                                </Grid.GestureRecognizers>
+                                                
+                                                <Grid ColumnDefinitions="24,*" 
+                                                      Padding="16,0"
+                                                      VerticalOptions="Center">
+                                                    <!-- Icon/Number -->
+                                                    <Label Grid.Column="0"
+                                                           Text="{Binding Number}"
+                                                           TextColor="#8A8D91"
+                                                           FontSize="15"
+                                                           HorizontalOptions="Start"
+                                                           VerticalOptions="Center"/>
+                                                    
+                                                    <!-- Menu Item Text -->
+                                                    <Label Grid.Column="1"
+                                                           Text="{Binding Title}"
+                                                           TextColor="#FFFFFF"
+                                                           FontSize="15"
+                                                           Margin="16,0,0,0"
+                                                           VerticalOptions="Center"/>
+                                                </Grid>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage> 

@@ -8,10 +8,13 @@ namespace EducGramming.Converters
         {
             if (value is int lives && parameter is string param && int.TryParse(param, out int heartPosition))
             {
-                // Simple visibility check: show heart if lives is greater than or equal to position
+                // Show heart if lives is greater than or equal to position
+                // Heart3 shows when lives >= 3
+                // Heart2 shows when lives >= 2
+                // Heart1 shows when lives >= 1
                 return lives >= heartPosition;
             }
-            return false;
+            return true; // Default to visible if something goes wrong
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

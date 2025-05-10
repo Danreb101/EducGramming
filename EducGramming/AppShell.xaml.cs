@@ -71,6 +71,9 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("resetpassword", typeof(Views.ResetPasswordPage));
         Routing.RegisterRoute("changepassword", typeof(Views.ChangePasswordPage));
         
+        // Register lesson routes
+        Routing.RegisterRoute("lessonmenu", typeof(Views.LessonMenuPage));
+        
         // Register any other routes here
         
         Debug.WriteLine("Routes registered successfully");

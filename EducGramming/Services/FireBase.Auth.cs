@@ -223,154 +223,26 @@ namespace EducGramming.Services
         {
             try
             {
-                Debug.WriteLine($"===== FirebaseAuthService.SignIn started =====");
-                
-                // Basic validation
-                if (string.IsNullOrEmpty(email))
+                // Fast path for test account
+                if (email?.Trim().ToLower() == "test123@gmail.com" && password == "test123")
                 {
-                    Debug.WriteLine("SignIn error: Email cannot be empty");
-                    throw new Exception("Email cannot be empty");
-                }
-                
-                if (string.IsNullOrEmpty(password))
-                {
-                    Debug.WriteLine("SignIn error: Password cannot be empty");
-                    throw new Exception("Password cannot be empty");
-                }
-                
-                if (!IsValidEmail(email))
-                {
-                    Debug.WriteLine("SignIn error: Invalid email format");
-                    throw new Exception("Invalid email format");
-                }
-                
-                Debug.WriteLine($"Starting sign-in process for email: {email}");
-                
-                // SPECIAL HANDLING FOR TEST ACCOUNTS
-                // Check if this is a test account and use it as a fallback option
-                bool isTestAccount = email.Trim().ToLower() == "test123@gmail.com" && password == "test123";
-                
-                // First try real Firebase authentication regardless of the account type
-                if (!_useDummyAuth || isTestAccount)
-                {
-                    try
-                    {
-                        Debug.WriteLine($"Attempting Firebase authentication for: {email}");
-                        
-                        if (_authProvider == null)
-                        {
-                            Debug.WriteLine("Auth provider is null, creating new instance");
-                            _authProvider = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
-                        }
-                        
-                        Debug.WriteLine("Calling SignInWithEmailAndPasswordAsync");
-                        // Try Firebase authentication first
-                        _currentUser = await _authProvider.SignInWithEmailAndPasswordAsync(email, password);
-                        
-                        if (_currentUser == null)
-                        {
-                            Debug.WriteLine("Firebase returned null user");
-                            throw new Exception("Firebase authentication returned null user");
-                        }
-                        
-                        if (_currentUser.User == null)
-                        {
-                            Debug.WriteLine("Firebase returned user with null properties");
-                            throw new Exception("Firebase authentication returned user with null properties");
-                        }
-                        
-                        Debug.WriteLine($"Successfully signed in with Firebase: {_currentUser.User.Email}");
-                        
-                        // Save user state
-                        SaveUserState(_currentUser, true);
-                        
-                        // Start token refresh
-                        _ = RefreshTokenPeriodically();
-                        
-                        Debug.WriteLine("===== FirebaseAuthService.SignIn completed successfully (Firebase) =====");
-                        return _currentUser;
-                    }
-                    catch (Firebase.Auth.FirebaseAuthException firebaseEx)
-                    {
-                        // Log the Firebase error
-                        Debug.WriteLine($"Firebase signin error: {firebaseEx.GetType().Name}: {firebaseEx.Message}");
-                        
-                        // If this is a test account, fall back to dummy auth
-                        if (isTestAccount)
-                        {
-                            Debug.WriteLine("Test account detected - falling back to dummy authentication");
-                            _currentUser = CreateDummyAuthLink("test123@gmail.com");
-                            SaveUserState(_currentUser, true);
-                            Debug.WriteLine("===== FirebaseAuthService.SignIn completed successfully (test account fallback) =====");
-                            return _currentUser;
-                        }
-                        
-                        // For other accounts, provide friendly error messages
-                        Debug.WriteLine("===== FirebaseAuthService.SignIn failed (Firebase Exception) =====");
-                        if (firebaseEx.Message.Contains("INVALID_PASSWORD") || 
-                            firebaseEx.Message.Contains("INVALID_EMAIL") ||
-                            firebaseEx.Message.Contains("INVALID_LOGIN_CREDENTIALS"))
-                        {
-                            throw new Exception("Email or password is incorrect. Please try again.");
-                        }
-                        else if (firebaseEx.Message.Contains("USER_DISABLED"))
-                        {
-                            throw new Exception("Your account has been disabled. Please contact support.");
-                        }
-                        else if (firebaseEx.Message.Contains("EMAIL_NOT_FOUND"))
-                        {
-                            throw new Exception("No account found with this email. Please check your email or sign up.");
-                        }
-                        else if (firebaseEx.Message.Contains("TOO_MANY_ATTEMPTS_TRY_LATER"))
-                        {
-                            throw new Exception("Too many failed login attempts. Please try again later.");
-                        }
-                        else
-                        {
-                            throw new Exception($"Login failed: {firebaseEx.Message}");
-                        }
-                    }
-                }
-                
-                // FALLBACK TO DUMMY AUTH ONLY IF EXPLICITLY ENABLED
-                // This section will only execute if _useDummyAuth is true and we got here
-                if (_useDummyAuth)
-                {
-                    Debug.WriteLine("Using dummy auth mode as fallback");
-                    
-                    // CASE-INSENSITIVE LOOKUP FOR DUMMY USERS
-                    string emailLower = email.ToLower().Trim();
-                    string dummyEmail = _dummyUsers.Keys.FirstOrDefault(k => k.ToLower() == emailLower);
-                    
-                    if (dummyEmail == null)
-                    {
-                        Debug.WriteLine($"Dummy auth failed - user not found: {email}");
-                        throw new Exception("Email or password is incorrect. Please try again.");
-                    }
-                    
-                    if (password != _dummyUsers[dummyEmail])
-                    {
-                        Debug.WriteLine($"Dummy auth failed - password mismatch for user: {email}");
-                        throw new Exception("Email or password is incorrect. Please try again.");
-                    }
-                    
-                    Debug.WriteLine("Dummy auth successful - creating auth link");
-                    _currentUser = CreateDummyAuthLink(dummyEmail);
+                    _currentUser = CreateDummyAuthLink("test123@gmail.com");
                     SaveUserState(_currentUser, true);
-                    Debug.WriteLine("===== FirebaseAuthService.SignIn completed successfully (dummy) =====");
                     return _currentUser;
                 }
-                
-                // If we got here, both Firebase and dummy auth failed
-                throw new Exception("Authentication failed. Please check your credentials.");
+
+                // Direct Firebase authentication
+                var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
+                _currentUser = await auth.SignInWithEmailAndPasswordAsync(email, password);
+                SaveUserState(_currentUser, true);
+                return _currentUser;
             }
-            catch (Exception ex)
+            catch (FirebaseAuthException firebaseEx)
             {
-                // Log the error
-                Debug.WriteLine($"Firebase signin general error: {ex.Message}");
-                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                Debug.WriteLine("===== FirebaseAuthService.SignIn failed (General Exception) =====");
-                throw; // Rethrow to be handled by the UI
+                throw new Exception(firebaseEx.Message.Contains("INVALID_PASSWORD") || 
+                                  firebaseEx.Message.Contains("INVALID_EMAIL") ||
+                                  firebaseEx.Message.Contains("EMAIL_NOT_FOUND") ? 
+                                  "Email or password is incorrect" : firebaseEx.Message);
             }
         }
 

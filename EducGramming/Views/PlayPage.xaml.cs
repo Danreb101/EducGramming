@@ -44,11 +44,13 @@ public partial class PlayPage : ContentPage
 
                 if (heartToAnimate != null)
                 {
-                    // Start the animation before the heart disappears
+                    // Create a smoother animation sequence
+                    await heartToAnimate.ScaleTo(1.2, 200, Easing.CubicOut); // Gentle pulse outward
                     await Task.WhenAll(
-                        heartToAnimate.ScaleTo(1.5, 100),
-                        heartToAnimate.FadeTo(0, 300)
+                        heartToAnimate.ScaleTo(0.8, 400, Easing.CubicInOut), // Shrink while fading
+                        heartToAnimate.FadeTo(0, 600, Easing.CubicIn)        // Longer, smoother fade out
                     );
+                    heartToAnimate.IsVisible = false;
                 }
             }
             else if (currentLives > _previousLives)
@@ -76,9 +78,15 @@ public partial class PlayPage : ContentPage
 
     private async Task ResetHeart(Label heart)
     {
-        heart.Scale = 1.0;
-        heart.Opacity = 1.0;
-        await heart.FadeTo(1, 300);
+        heart.IsVisible = true;
+        heart.Scale = 0.8;           // Start slightly smaller
+        heart.Opacity = 0;           // Start fully transparent
+        
+        // Smooth fade in with scale
+        await Task.WhenAll(
+            heart.ScaleTo(1.0, 400, Easing.CubicOut),     // Scale up smoothly
+            heart.FadeTo(1, 500, Easing.CubicOut)         // Fade in smoothly
+        );
     }
 
     private void OnDragStarting(object sender, DragStartingEventArgs e)
@@ -101,15 +109,17 @@ public partial class PlayPage : ContentPage
         AnswerDropZone.BackgroundColor = new Color(27, 59, 111); // #1B3B6F
     }
 
-    private async void OnDrop(object sender, DropEventArgs e)
+    private void OnDrop(object sender, DropEventArgs e)
     {
         // Reset drop zone appearance
         AnswerDropZone.BackgroundColor = new Color(27, 59, 111); // #1B3B6F
 
         if (e.Data.Properties.TryGetValue("Answer", out var answer) && answer is string answerText)
         {
-            // Execute the command
-            _viewModel.CheckAnswerCommand.Execute(answerText);
+            // Execute the command immediately
+            MainThread.BeginInvokeOnMainThread(() => {
+                _viewModel.CheckAnswerCommand.Execute(answerText);
+            });
         }
     }
 

@@ -57,7 +57,10 @@
                            TextColor="Black"
                            FontSize="16"
                            FontAttributes="Bold"/>
-                    <Label Text="{Binding LessonsCompleted, StringFormat='Lessons completed: {0}'}"
+                    <Label Text="{Binding LessonsCompleted, StringFormat='Lessons completed in C#: {0}'}"
+                           TextColor="#666666"
+                           FontSize="14"/>
+                    <Label Text="{Binding LessonsCompleted, StringFormat='Lessons completed in Java: {0}'}"
                            TextColor="#666666"
                            FontSize="14"/>
                     <Label Text="{Binding HighScore, StringFormat='High Score: {0}'}"

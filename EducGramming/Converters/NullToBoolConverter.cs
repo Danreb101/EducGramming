@@ -2,16 +2,11 @@ using System.Globalization;
 
 namespace EducGramming.Converters
 {
-    public class BoolToColorConverter : IValueConverter
+    public class NullToBoolConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool isWrong)
-            {
-                // Simple red for wrong, green for correct
-                return isWrong ? Colors.Red : Colors.Green;
-            }
-            return Colors.Transparent;
+            return value == null;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

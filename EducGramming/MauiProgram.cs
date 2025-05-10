@@ -22,6 +22,7 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
             });
 
         // Register services
@@ -35,6 +36,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<IntToHeartVisibilityConverter>();
         builder.Services.AddSingleton<TabToColorConverter>();
         builder.Services.AddSingleton<StringEqualsConverter>();
+        builder.Services.AddSingleton<BoolToExpandCollapseIconConverter>();
+        builder.Services.AddSingleton<NotNullToBoolConverter>();
+        builder.Services.AddSingleton<NullToBoolConverter>();
 
         // Register view models
         builder.Services.AddTransient<LoginViewModel>();
