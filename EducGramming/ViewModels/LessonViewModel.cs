@@ -46,21 +46,182 @@ namespace EducGramming.ViewModels
         public ObservableCollection<LessonItem> Lessons { get; set; } = new();
     }
 
-    public class LessonItem
+    public class LessonItem : INotifyPropertyChanged
     {
+        private bool _isSelected;
+        private string _title = string.Empty;
+        private bool _isCompleted;
+        private bool _isLocked;
+        
+        public event PropertyChangedEventHandler PropertyChanged;
+        
+        public void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+        
         public int Number { get; set; }
-        public string Title { get; set; } = string.Empty;
+        
+        public string Title 
+        { 
+            get => _title;
+            set
+            {
+                if (_title != value)
+                {
+                    _title = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        
         public string Description { get; set; } = string.Empty;
         public string Language { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public string VideoUrl { get; set; } = string.Empty;
-        public bool IsSelected { get; set; }
+        
+        public bool IsSelected 
+        { 
+            get => _isSelected;
+            set
+            {
+                if (_isSelected != value)
+                {
+                    _isSelected = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool IsCompleted
+        {
+            get => _isCompleted;
+            set
+            {
+                if (_isCompleted != value)
+                {
+                    _isCompleted = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(StatusIcon));
+                }
+            }
+        }
+
+        public bool IsLocked
+        {
+            get => _isLocked;
+            set
+            {
+                if (_isLocked != value)
+                {
+                    _isLocked = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(StatusIcon));
+                }
+            }
+        }
+
+        public string StatusIcon
+        {
+            get
+            {
+                if (IsLocked) return "🔒";
+                if (IsCompleted) return "✅";
+                return "🔓";
+            }
+        }
+        
         public List<string> Options { get; set; } = new();
         public string CorrectAnswer { get; set; } = string.Empty;
     }
 
     public partial class LessonViewModel : ObservableObject
     {
+        private int _currentLessonIndex;
+        private bool _isInitialized;
+        private int _lives = 3;
+        private DateTime _lastActionTime = DateTime.MinValue;
+        private const int ACTION_COOLDOWN_SECONDS = 30;
+        
+        public int Lives
+        {
+            get => _lives;
+            set
+            {
+                if (_lives != value)
+                {
+                    _lives = value;
+                    OnPropertyChanged(nameof(Lives));
+                }
+            }
+        }
+
+        // Check if enough time has passed since the last action
+        private bool CanPerformAction()
+        {
+            var timeSinceLastAction = DateTime.Now - _lastActionTime;
+            return timeSinceLastAction.TotalSeconds >= ACTION_COOLDOWN_SECONDS;
+        }
+
+        // Update the last action timestamp
+        private void UpdateActionTimestamp()
+        {
+            _lastActionTime = DateTime.Now;
+        }
+
+        public void ResetLives()
+        {
+            // Always reset to exactly 3 lives
+            Lives = 3;
+            
+            // Ensure UI updates
+            OnPropertyChanged(nameof(Lives));
+        }
+
+        // Method to reset the current lesson
+        public async Task RestartCurrentLessonAsync()
+        {
+            // Check if the action is allowed based on cooldown
+            if (!CanPerformAction())
+            {
+                // If action was performed too recently, ignore
+                return;
+            }
+            
+            // Update the timestamp
+            UpdateActionTimestamp();
+            
+            // Reset hearts to 3
+            ResetLives();
+
+            // Reload the current lesson
+            if (SelectedLesson != null)
+            {
+                var section = LessonSections.FirstOrDefault(s => s.Lessons.Contains(SelectedLesson));
+                if (section != null)
+                {
+                    int index = section.Lessons.IndexOf(SelectedLesson);
+                    await SelectLessonAsync(index);
+                }
+            }
+        }
+
+        public int CurrentLessonIndex
+        {
+            get => _currentLessonIndex;
+            set
+            {
+                if (_currentLessonIndex != value)
+                {
+                    _currentLessonIndex = value;
+                    if (_isInitialized)
+                    {
+                        LoadLessonByIndex(value);
+                    }
+                }
+            }
+        }
+
         [ObservableProperty]
         private string _selectedLanguage = "C#";
 
@@ -77,7 +238,7 @@ namespace EducGramming.ViewModels
         private ObservableCollection<LessonItem> _currentQuestions = new();
 
         [ObservableProperty]
-        private bool _isSidebarVisible = false;
+        private bool _isSidebarVisible = true;
 
         [ObservableProperty]
         private double _sidebarWidth = 300;
@@ -87,81 +248,218 @@ namespace EducGramming.ViewModels
 
         [ObservableProperty]
         private bool _isPlaying;
+        
+        [ObservableProperty]
+        private bool _isLoading;
 
         public LessonViewModel()
         {
             LoadContent();
+            _isInitialized = true;
+        }
+
+        public async Task HandleMenuItemSelection(string menuId)
+        {
+            if (string.IsNullOrEmpty(menuId)) return;
+            
+            try
+            {
+                IsLoading = true;
+                
+                // Parse the menu ID to get section and item indices
+                var parts = menuId.Split('_');
+                if (parts.Length == 2 && int.TryParse(parts[1], out int lessonIndex))
+                {
+                    await SelectLessonAsync(lessonIndex);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling menu selection: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         [RelayCommand]
         private void ToggleSidebar()
         {
-            IsSidebarVisible = !IsSidebarVisible;
+            try
+            {
+                IsSidebarVisible = !IsSidebarVisible;
+                
+                if (IsSidebarVisible && SelectedLesson != null)
+                {
+                    // When opening sidebar, ensure correct section is expanded
+                    foreach (var section in LessonSections)
+                    {
+                        section.IsExpanded = section.Lessons.Any(l => l.IsSelected);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error toggling sidebar: {ex.Message}");
+            }
         }
 
         [RelayCommand]
         private void ToggleSection(LessonSection section)
         {
-            if (section != null)
+            if (section == null) return;
+            
+            try
             {
+                // Close other sections when opening a new one
+                foreach (var s in LessonSections)
+                {
+                    if (s != section)
+                    {
+                        s.IsExpanded = false;
+                    }
+                }
                 section.IsExpanded = !section.IsExpanded;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error toggling section: {ex.Message}");
             }
         }
 
         [RelayCommand]
-        private void SelectLesson(LessonItem lesson)
+        private async Task SelectLessonAsync(int index)
         {
             try
             {
-                if (lesson == null) return;
-                // Update selection state
-                foreach (var section in LessonSections)
+                var section = LessonSections.FirstOrDefault(s => 
+                    s.Title.StartsWith(SelectedLanguage, StringComparison.OrdinalIgnoreCase));
+                    
+                if (section == null || index < 0 || index >= section.Lessons.Count)
                 {
-                    foreach (var item in section.Lessons)
+                    Debug.WriteLine($"Invalid lesson index: {index}");
+                    return;
+                }
+
+                var lesson = section.Lessons[index];
+                
+                // Always unlock the first lesson
+                if (index == 0 && lesson.IsLocked)
+                {
+                    lesson.IsLocked = false;
+                    lesson.OnPropertyChanged("StatusIcon");
+                }
+                
+                if (lesson == null || (lesson.IsLocked && index > 0))
+                {
+                    // Show message if lesson is locked but not the first lesson
+                    if (lesson?.IsLocked == true && index > 0)
                     {
-                        item.IsSelected = item == lesson;
+                        await Application.Current.MainPage.DisplayAlert(
+                            "Lesson Locked",
+                            "Please complete the previous lesson to unlock this one.",
+                            "OK"
+                        );
+                    }
+                    return;
+                }
+
+                // Always reset lives to 3 when selecting a lesson
+                ResetLives();
+                
+                // Reset action timestamp when selecting a new lesson
+                UpdateActionTimestamp();
+
+                // Update selection state
+                foreach (var s in LessonSections)
+                {
+                    foreach (var item in s.Lessons)
+                    {
+                        item.IsSelected = (item == lesson);
                     }
                 }
+
                 SelectedLesson = lesson;
-                // Update lesson content based on selection
-                LessonContent = GetLessonContent(lesson);
-                // Load video content
-                LoadVideoContent(lesson);
-                // Load corresponding questions
-                LoadQuestions(lesson);
-                // Do NOT close the sidebar here
+                _currentLessonIndex = index;
+                
+                await Task.WhenAll(
+                    Task.Run(() => LessonContent = GetLessonContent(lesson)),
+                    Task.Run(() => LoadVideoContent(lesson)),
+                    Task.Run(() => LoadQuestions(lesson))
+                );
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error selecting lesson: {ex.Message}");
-                // Handle the error gracefully - could show a message to the user if needed
+            }
+        }
+
+        private void LoadLessonByIndex(int index)
+        {
+            try
+            {
+                var section = LessonSections.FirstOrDefault(s => 
+                    s.Title.StartsWith(SelectedLanguage, StringComparison.OrdinalIgnoreCase));
+                    
+                if (section != null && index >= 0 && index < section.Lessons.Count)
+                {
+                    _ = SelectLessonAsync(index);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading lesson by index: {ex.Message}");
             }
         }
 
         private void LoadContent()
         {
-            LessonSections.Clear();
-
-            var csharpSection = new LessonSection 
-            { 
-                Title = "C# Lessons",
-                IsExpanded = true
-            };
-            LoadCSharpContent(csharpSection.Lessons);
-            LessonSections.Add(csharpSection);
-
-            var javaSection = new LessonSection 
-            { 
-                Title = "Java Lessons",
-                IsExpanded = false
-            };
-            LoadJavaContent(javaSection.Lessons);
-            LessonSections.Add(javaSection);
-
-            // Select first lesson by default
-            if (csharpSection.Lessons.Count > 0)
+            try
             {
-                SelectedLesson = csharpSection.Lessons[0];
+                LessonSections.Clear();
+                IsLoading = true;
+
+                // Reset lives when loading new content
+                ResetLives();
+
+                var csharpSection = new LessonSection 
+                { 
+                    Title = "C# Lessons",
+                    IsExpanded = SelectedLanguage == "C#"
+                };
+                LoadCSharpContent(csharpSection.Lessons);
+                LessonSections.Add(csharpSection);
+
+                var javaSection = new LessonSection 
+                { 
+                    Title = "Java Lessons",
+                    IsExpanded = SelectedLanguage == "Java"
+                };
+                LoadJavaContent(javaSection.Lessons);
+                LessonSections.Add(javaSection);
+
+                // Select appropriate section and lesson
+                var currentSection = SelectedLanguage == "C#" ? csharpSection : javaSection;
+                if (currentSection.Lessons.Count > 0)
+                {
+                    // Load completion status
+                    LoadLessonCompletionStatus(currentSection.Lessons);
+                    
+                    var firstLesson = currentSection.Lessons[CurrentLessonIndex];
+                    firstLesson.IsSelected = true;
+                    SelectedLesson = firstLesson;
+                    LoadVideoContent(firstLesson);
+                    LoadQuestions(firstLesson);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading content: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
@@ -170,12 +468,7 @@ namespace EducGramming.ViewModels
             var csharpLessons = new List<(int number, string title, string description, List<string> options, string correctAnswer)>
             {
                 (1, "Introduction to C#", 
-                @"Learn the basics of C# programming:
-                - What is C# and .NET Framework
-                - Your first C# program
-                - Basic syntax and structure
-                - Console input and output
-                - Comments and documentation", 
+                "", 
                 new List<string> {
                     "C# is a programming language developed by Microsoft",
                     "C# is a database management system",
@@ -185,13 +478,7 @@ namespace EducGramming.ViewModels
                 "C# is a programming language developed by Microsoft"),
 
                 (2, "Variables and Data Types", 
-                @"Understanding data types and variables:
-                - Integer types (int, long, short)
-                - Floating-point types (float, double, decimal)
-                - Character and string types
-                - Boolean type
-                - Variable declaration and initialization
-                - Type conversion and casting", 
+                "", 
                 new List<string> {
                     "int, float, string, bool are basic data types in C#",
                     "All numbers in C# are stored as text",
@@ -201,13 +488,7 @@ namespace EducGramming.ViewModels
                 "int, float, string, bool are basic data types in C#"),
 
                 (3, "Control Structures", 
-                @"Learn about control flow:
-                - If-else statements
-                - Switch statements
-                - For loops
-                - While and do-while loops
-                - Break and continue statements
-                - Logical operators", 
+                "", 
                 new List<string> {
                     "Control structures help manage program flow",
                     "Control structures are only used for mathematical operations",
@@ -217,13 +498,7 @@ namespace EducGramming.ViewModels
                 "Control structures help manage program flow"),
 
                 (4, "Methods and Functions", 
-                @"Working with methods:
-                - Method declaration and definition
-                - Parameters and return types
-                - Method overloading
-                - Optional parameters
-                - Named arguments
-                - Expression-bodied methods", 
+                "", 
                 new List<string> {
                     "Methods are reusable blocks of code that perform specific tasks",
                     "Methods can only return void",
@@ -233,14 +508,7 @@ namespace EducGramming.ViewModels
                 "Methods are reusable blocks of code that perform specific tasks"),
 
                 (5, "Object-Oriented Programming", 
-                @"Understanding OOP concepts:
-                - Classes and objects
-                - Properties and fields
-                - Constructors
-                - Inheritance
-                - Polymorphism
-                - Encapsulation
-                - Interfaces and abstract classes", 
+                "", 
                 new List<string> {
                     "OOP helps organize code using classes and objects",
                     "OOP is only used for game development",
@@ -250,13 +518,7 @@ namespace EducGramming.ViewModels
                 "OOP helps organize code using classes and objects"),
 
                 (6, "Collections and Arrays", 
-                @"Working with data collections:
-                - Arrays and array operations
-                - Lists and List<T>
-                - Dictionaries and Dictionary<TKey,TValue>
-                - HashSet and SortedSet
-                - Queue and Stack
-                - LINQ basics", 
+                "", 
                 new List<string> {
                     "Collections are used to store multiple values",
                     "Arrays can only store numbers",
@@ -266,13 +528,7 @@ namespace EducGramming.ViewModels
                 "Collections are used to store multiple values"),
 
                 (7, "Exception Handling", 
-                @"Managing errors and exceptions:
-                - Try-catch blocks
-                - Multiple catch blocks
-                - Finally block
-                - Throwing exceptions
-                - Custom exceptions
-                - Best practices for error handling", 
+                "", 
                 new List<string> {
                     "Exception handling helps manage runtime errors",
                     "Exceptions automatically fix all errors",
@@ -282,13 +538,7 @@ namespace EducGramming.ViewModels
                 "Exception handling helps manage runtime errors"),
 
                 (8, "File Operations", 
-                @"Working with files and streams:
-                - Reading text files
-                - Writing to files
-                - File and Directory classes
-                - Stream operations
-                - File system operations
-                - Async file operations", 
+                "", 
                 new List<string> {
                     "File operations allow reading and writing files",
                     "Files can only store text",
@@ -317,14 +567,14 @@ namespace EducGramming.ViewModels
         {
             var javaLessons = new List<(int number, string title, string description)>
             {
-                (1, "Introduction to Java", "Learn the basics of Java programming including variables, data types, and control structures."),
-                (2, "Variables and Data Types", "Understanding different data types and how to use variables in Java."),
-                (3, "Control Flow", "Learn about if statements, loops, and switch cases in Java."),
-                (4, "Methods", "Creating and using methods, understanding parameters and return values."),
-                (5, "Object-Oriented Programming", "Understanding classes, objects, inheritance, and polymorphism in Java."),
-                (6, "Arrays and Collections", "Working with arrays, ArrayLists, and other collection types."),
-                (7, "Exception Handling", "Learn how to handle errors and exceptions in your code."),
-                (8, "File I/O", "Reading from and writing to files in Java.")
+                (1, "Introduction to Java", ""),
+                (2, "Variables and Data Types", ""),
+                (3, "Control Flow", ""),
+                (4, "Methods", ""),
+                (5, "Object-Oriented Programming", ""),
+                (6, "Arrays and Collections", ""),
+                (7, "Exception Handling", ""),
+                (8, "File I/O", "")
             };
 
             foreach (var lesson in javaLessons)
@@ -335,8 +585,8 @@ namespace EducGramming.ViewModels
                     Title = lesson.title,
                     Description = lesson.description,
                     Language = "Java",
-                Type = "Lesson"
-            });
+                    Type = "Lesson"
+                });
             }
         }
 
@@ -627,6 +877,12 @@ using (StreamReader reader = new StreamReader(""file.txt""))
             if (CurrentVideo != null)
             {
                 IsPlaying = true;
+                
+                // When video finishes playing, mark the lesson as completed
+                if (SelectedLesson != null)
+                {
+                    MarkLessonAsCompleted(SelectedLesson);
+                }
             }
         }
 
@@ -730,30 +986,123 @@ using (StreamReader reader = new StreamReader(""file.txt""))
             CurrentQuestions.Add(question);
         }
 
+        private void LoadLessonCompletionStatus(ObservableCollection<LessonItem> lessons)
+        {
+            // First lesson is always unlocked
+            if (lessons.Count > 0)
+            {
+                lessons[0].IsLocked = false;
+                
+                // If no lessons are completed yet, still show first lesson as unlocked
+                var key = $"Lesson_{lessons[0].Language}_{lessons[0].Number}_Completed";
+                lessons[0].IsCompleted = Preferences.Default.Get(key, false);
+                lessons[0].OnPropertyChanged("StatusIcon");
+            }
+
+            // Load completion status from preferences and set lock status
+            for (int i = 1; i < lessons.Count; i++)
+            {
+                var lesson = lessons[i];
+                var key = $"Lesson_{lesson.Language}_{lesson.Number}_Completed";
+                lesson.IsCompleted = Preferences.Default.Get(key, false);
+
+                // Lock/unlock lessons based on previous lesson completion
+                lesson.IsLocked = !lessons[i - 1].IsCompleted;
+                
+                // Trigger property change for status icon
+                lesson.OnPropertyChanged("StatusIcon");
+            }
+        }
+
+        public void MarkLessonAsCompleted(LessonItem lesson)
+        {
+            if (lesson == null) return;
+
+            try
+            {
+                // Mark the lesson as completed
+                lesson.IsCompleted = true;
+                var key = $"Lesson_{lesson.Language}_{lesson.Number}_Completed";
+                Preferences.Default.Set(key, true);
+
+                // Unlock the next lesson if it exists
+                var section = LessonSections.FirstOrDefault(s => s.Lessons.Contains(lesson));
+                if (section != null)
+                {
+                    var currentIndex = section.Lessons.IndexOf(lesson);
+                    if (currentIndex < section.Lessons.Count - 1)
+                    {
+                        var nextLesson = section.Lessons[currentIndex + 1];
+                        nextLesson.IsLocked = false;
+                        nextLesson.OnPropertyChanged("StatusIcon");
+                    }
+                }
+
+                // Update the status icon
+                lesson.OnPropertyChanged("StatusIcon");
+                Debug.WriteLine($"Marked lesson {lesson.Title} as completed and unlocked next lesson");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error marking lesson as completed: {ex.Message}");
+            }
+        }
+
+        public async Task HandleWrongAnswer()
+        {
+            if (Lives > 0)
+            {
+                Lives--;
+                
+                if (Lives <= 0)
+                {
+                    // Check if the restart action is allowed based on cooldown
+                    if (!CanPerformAction())
+                    {
+                        // If action was performed too recently, still reduce lives but don't restart
+                        return;
+                    }
+                    
+                    // Update the timestamp
+                    UpdateActionTimestamp();
+                    
+                    // When lives are depleted, restart the lesson with full hearts
+                    await RestartCurrentLessonAsync();
+                }
+            }
+        }
+        
+        // Method to handle when time runs out
+        public async Task HandleTimeOut()
+        {
+            // Check if the action is allowed based on cooldown
+            if (!CanPerformAction())
+            {
+                // If action was performed too recently, ignore
+                return;
+            }
+            
+            // Update the timestamp
+            UpdateActionTimestamp();
+            
+            // No Game Over alert - just restart silently
+            
+            // Reset lives and restart current lesson
+            await RestartCurrentLessonAsync();
+        }
+
         partial void OnSelectedLanguageChanged(string value)
         {
             try
             {
-                // Clear current state
-                SelectedLesson = null;
-                CurrentVideo = null;
-                CurrentQuestions.Clear();
-                LessonContent = string.Empty;
-                IsPlaying = false;
-
-                // Reload content for the new language
-            LoadContent();
-
-                // Select first lesson by default
-                var firstSection = LessonSections.FirstOrDefault();
-                if (firstSection != null && firstSection.Lessons.Count > 0)
+                if (_isInitialized)
                 {
-                    SelectLesson(firstSection.Lessons[0]);
+                    LoadContent();
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error changing language: {ex.Message}");
+                Debug.WriteLine($"Error handling language change: {ex.Message}");
             }
         }
     }

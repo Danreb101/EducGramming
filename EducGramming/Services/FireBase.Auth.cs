@@ -392,37 +392,48 @@ namespace EducGramming.Services
         {
             try
             {
+                if (_useDummyAuth)
+                {
+                    Debug.WriteLine("Dummy auth: Password would be changed");
+                    return;
+                }
+
                 // First verify the old password is correct by signing in
                 try
                 {
-                    // Try to sign in with Firebase using the old password
                     Debug.WriteLine($"Verifying old password for {email}");
                     var firebaseUser = await SignIn(email, oldPassword);
                     Debug.WriteLine("Old password verified successfully");
+
+                    if (firebaseUser != null && firebaseUser.User != null)
+                    {
+                        // Send password reset email
+                        await _authProvider.SendPasswordResetEmailAsync(email);
+                        Debug.WriteLine("Password reset email sent successfully");
+                        
+                        // Notify user to check their email
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert(
+                                "Password Reset",
+                                "A password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password.",
+                                "OK");
+                        });
+                    }
+                    else
+                    {
+                        throw new Exception("Failed to verify current password");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Failed to verify old password: {ex.Message}");
-                    throw new Exception("Current password is incorrect. Please try again.");
+                    Debug.WriteLine($"Error during password change: {ex.Message}");
+                    throw new Exception("Failed to change password. Please verify your current password is correct.");
                 }
-
-                // Send password reset email through Firebase
-                await SendPasswordResetEmailAsync(email);
-                
-                Debug.WriteLine($"Password reset email sent for user: {email}");
-                
-                // Inform the user
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    await Application.Current.MainPage.DisplayAlert(
-                        "Password Reset",
-                        "A password reset email has been sent to your email address. Please check your inbox to complete the password change process.",
-                        "OK");
-                });
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error changing password: {ex.Message}");
+                Debug.WriteLine($"Password change error: {ex.Message}");
                 throw;
             }
         }

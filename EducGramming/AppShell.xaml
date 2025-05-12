@@ -62,4 +62,11 @@
         Route="changepassword"
         ContentTemplate="{DataTemplate local:ChangePasswordPage}"
         FlyoutItemIsVisible="False" />
+
+    <!-- Lesson Menu route -->
+    <ShellContent
+        Route="lessonmenu"
+        ContentTemplate="{DataTemplate local:LessonMenuPage}"
+        FlyoutItemIsVisible="False" />
+
 </Shell>

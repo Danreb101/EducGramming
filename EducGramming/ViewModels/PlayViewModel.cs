@@ -9,6 +9,7 @@ namespace EducGramming.ViewModels
 {
     public class PlayViewModel : INotifyPropertyChanged
     {
+        private bool _isBusy;
         private double _heart1Scale = 1.0;
         private double _heart2Scale = 1.0;
         private double _heart3Scale = 1.0;
@@ -27,6 +28,19 @@ namespace EducGramming.ViewModels
         private bool _isHeartAnimating;
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                if (_isBusy != value)
+                {
+                    _isBusy = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         public double Heart1Scale
         {
@@ -66,7 +80,7 @@ namespace EducGramming.ViewModels
                 if (_lives != value)
                 {
                     _lives = value;
-                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(Lives));
                 }
             }
         }
@@ -206,7 +220,7 @@ namespace EducGramming.ViewModels
         public PlayViewModel()
         {
             _answerOptions = new ObservableCollection<string>();
-            RestartCommand = new Command(RestartGame);
+            RestartCommand = new Command(RestartFromGameOver);
             CloseCommand = new Command(CloseGame);
             CheckAnswerCommand = new Command<string>(CheckAnswer);
             
@@ -233,7 +247,9 @@ namespace EducGramming.ViewModels
                     Lives--;
                     if (Lives <= 0)
                     {
-                        EndGame();
+                        EndGame(); // This sets IsGameOver = true to show the overlay
+                        SaveHighScore();
+                        // No popup dialog, only the Game Over overlay
                     }
                     else
                     {
@@ -247,21 +263,18 @@ namespace EducGramming.ViewModels
         private void InitializeGame()
         {
             // Reset all game state
-            Lives = 3;
             Score = 0;
             TimeRemaining = 30;
             IsGameOver = false;
             IsWrongAnswer = false;
             LastWrongAnswer = "";
             FeedbackMessage = "";
-            
-            // Explicitly reset heart scales and visibility
-            Heart1Scale = 1.0;
-            Heart2Scale = 1.0;
-            Heart3Scale = 1.0;
             IsHeartAnimating = false;
             
-            // Force property change notification for Lives to update heart visibility
+            // GUARANTEED RESET TO 3 LIVES - direct field manipulation
+            _lives = 3;
+            
+            // Notify UI explicitly 
             OnPropertyChanged(nameof(Lives));
             
             // Load first question
@@ -336,53 +349,39 @@ namespace EducGramming.ViewModels
             }
         }
 
-        private async Task HandleWrongAnswer()
-        {
-            if (Lives > 0)
-            {
-                Lives--;  // This will trigger the animation in PlayPage.xaml.cs
-                
-                await Task.Delay(1000); // Show feedback message for 1 second
-                
-                if (Lives <= 0)
-                {
-                    EndGame();
-                    SaveHighScore();
-                }
-                else
-                {
-                    // Reset timer and load next question
-                    TimeRemaining = 30;
-                    LoadNextQuestion();
-                }
-            }
-        }
-
         private void RestartGame()
         {
-            _timer.Stop(); // Stop the current timer
-            
-            // Reset all game state
-            Lives = 3;
-            Score = 0;
-            TimeRemaining = 30;
-            IsGameOver = false;
-            IsWrongAnswer = false;
-            LastWrongAnswer = "";
-            FeedbackMessage = "";
-            
-            // Explicitly reset heart scales and visibility
-            Heart1Scale = 1.0;
-            Heart2Scale = 1.0;
-            Heart3Scale = 1.0;
-            IsHeartAnimating = false;
-            
-            // Force property change notification for Lives to update heart visibility
-            OnPropertyChanged(nameof(Lives));
-            
-            // Load new question and start timer
-            LoadNextQuestion();
-            _timer.Start();
+            try
+            {
+                // Stop the timer before doing any UI updates
+                _timer?.Stop();
+                
+                // Reset all game state
+                Score = 0;
+                TimeRemaining = 30;
+                IsGameOver = false;
+                IsWrongAnswer = false;
+                LastWrongAnswer = "";
+                FeedbackMessage = "";
+                IsHeartAnimating = false;
+                
+                // INSTANT RESET: Set lives to 3 with immediate UI update
+                _lives = 3;
+                OnPropertyChanged(nameof(Lives));
+                
+                // Immediately load new question and start timer
+                LoadNextQuestion();
+                _timer?.Start();
+            }
+            catch (Exception ex)
+            {
+                // Just log and recover
+                System.Diagnostics.Debug.WriteLine($"Error in RestartGame: {ex.Message}");
+                
+                // Ensure lives are reset
+                _lives = 3;
+                OnPropertyChanged(nameof(Lives));
+            }
         }
 
         private void CloseGame()
@@ -398,6 +397,43 @@ namespace EducGramming.ViewModels
             SaveHighScore();
         }
 
+        // Ensure this method gets called when clicking Play Again on Game Over
+        public void RestartFromGameOver()
+        {
+            try
+            {
+                // Stop the timer before doing any UI updates
+                _timer?.Stop();
+                
+                // Reset game state
+                Score = 0;
+                TimeRemaining = 30;
+                IsGameOver = false;
+                FeedbackMessage = "";
+                IsHeartAnimating = false;
+                
+                // INSTANT RESET: Set lives to 3 with immediate UI update
+                _lives = 3;
+                OnPropertyChanged(nameof(Lives));
+                
+                // Immediately load new question and start timer
+                LoadNextQuestion();
+                _timer?.Start();
+            }
+            catch (Exception ex)
+            {
+                // Just log and recover
+                System.Diagnostics.Debug.WriteLine($"Error in RestartFromGameOver: {ex.Message}");
+                
+                // Ensure lives are reset
+                _lives = 3;
+                OnPropertyChanged(nameof(Lives));
+                
+                // Ensure timer is running
+                _timer?.Start();
+            }
+        }
+
         private void SaveHighScore()
         {
             var currentHighScore = Preferences.Default.Get("HighScore", 0);
@@ -408,14 +444,106 @@ namespace EducGramming.ViewModels
             }
         }
 
+        public async Task HandleWrongAnswer()
+        {
+            // This method is now deprecated and functionality is moved to CheckAnswerAsync
+            // Keeping minimal implementation for backward compatibility
+            if (Lives > 0 && Lives <= 3)
+            {
+                // Lives decrement is now handled by CheckAnswerAsync
+            }
+        }
+
+        public async Task<bool> CheckAnswerAsync(string answer)
+        {
+            try
+            {
+                if (IsWrongAnswer) return false;
+
+                bool isCorrect = answer == _correctAnswer;
+                
+                if (isCorrect)
+                {
+                    IsWrongAnswer = false;
+                    Score += 1;
+                    FeedbackMessage = "Correct Answer";
+                    
+                    // Show feedback for a moment before moving to next question
+                    await Task.Delay(1000);
+                    LoadNextQuestion();
+                }
+                else
+                {
+                    IsWrongAnswer = true;
+                    LastWrongAnswer = answer;
+                    FeedbackMessage = "Wrong Answer";
+                    
+                    // Show feedback before decreasing lives
+                    await Task.Delay(500);
+                    
+                    if (Lives > 0)
+                    {
+                        Lives--; // Decrease lives once
+                        
+                        if (Lives <= 0)
+                        {
+                            EndGame();
+                            SaveHighScore();
+                            
+                            // REMOVED: Don't show alert popup, use only Game Over overlay
+                            // Just restart game when user clicks Play Again button on overlay
+                        }
+                        else
+                        {
+                            // Show the feedback for a moment longer before next question
+                            await Task.Delay(500);
+                            LoadNextQuestion(); 
+                        }
+                    }
+                }
+                
+                return isCorrect;
+            }
+            catch (Exception ex)
+            {
+                // Log error and recover
+                System.Diagnostics.Debug.WriteLine($"Error in CheckAnswerAsync: {ex.Message}");
+                return false;
+            }
+        }
+
+        public void ResetLives()
+        {
+            try
+            {
+                // Always force reset to 3 lives with no animation
+                _lives = 3; // Direct field access to ensure proper value
+                
+                // Multiple notifications to ensure UI updates
+                OnPropertyChanged(nameof(Lives));
+                
+                // Log the reset for debugging
+                System.Diagnostics.Debug.WriteLine("Lives reset to 3");
+            }
+            catch (Exception ex)
+            {
+                // Recover from any errors
+                System.Diagnostics.Debug.WriteLine($"Error in ResetLives: {ex.Message}");
+                _lives = 3;
+                OnPropertyChanged(nameof(Lives));
+            }
+        }
+
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            if (PropertyChanged != null)
+            try
             {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-                });
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash
+                System.Diagnostics.Debug.WriteLine($"Error in PropertyChanged: {ex.Message}");
             }
         }
     }

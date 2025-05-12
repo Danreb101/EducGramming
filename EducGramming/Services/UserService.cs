@@ -5,6 +5,13 @@ using Firebase.Auth;
 
 namespace EducGramming.Services
 {
+    public class UserProfile
+    {
+        public string Email { get; set; }
+        public string Username { get; set; }
+        public string FullName { get; set; }
+    }
+
     public class UserService
     {
         private const string UsersKey = "RegisteredUsers";
@@ -23,7 +30,7 @@ namespace EducGramming.Services
             _firebaseAuthService = new FirebaseAuthService();
         }
 
-        public async Task RegisterUser(string email, string password, string username, string fullName)
+        public async Task RegisterUser(string email, string password, string fullName)
         {
             try
             {
@@ -40,6 +47,11 @@ namespace EducGramming.Services
                     Debug.WriteLine($"Registering user with Firebase: {email}");
                     var firebaseUser = await _firebaseAuthService.SignUp(email, password);
                     Debug.WriteLine($"Successfully registered with Firebase: {firebaseUser.User.Email}");
+
+                    // Store user info in preferences immediately
+                    Preferences.Default.Set("CurrentEmail", email);
+                    Preferences.Default.Set("CurrentFullName", fullName);
+                    Preferences.Default.Set("CurrentUsername", email);
                 }
                 catch (FirebaseAuthException firebaseEx)
                 {
@@ -47,18 +59,18 @@ namespace EducGramming.Services
                     throw new Exception($"Firebase registration failed: {firebaseEx.Message}");
                 }
 
-                // Add user to local storage for additional profile data
+                // Add user to local storage for profile data
                 users.Add(new UserData 
                 { 
                     Email = email,
-                    Password = password, // In a real app, this should be hashed
-                    Username = username, // This is now derived from email
-                    FullName = fullName
+                    Password = password,
+                    FullName = fullName,
+                    Username = email // Use email as username
                 });
 
                 // Save updated users list
                 await SaveUsers(users);
-                Debug.WriteLine($"Successfully registered user: {email} with username: {username}");
+                Debug.WriteLine($"Successfully registered user: {email} with full name: {fullName}");
             }
             catch (Exception ex)
             {
@@ -77,30 +89,40 @@ namespace EducGramming.Services
                     _firebaseAuthService = new FirebaseAuthService();
                 }
 
-                // Direct Firebase authentication
-                var firebaseUser = await _firebaseAuthService.SignIn(email, password);
-                
-                // Store minimal info
-                Preferences.Default.Set("CurrentEmail", email);
-                
-                // Get user profile in background
-                _ = Task.Run(async () => {
-                    var users = await GetAllUsers();
-                    var user = users.FirstOrDefault(u => 
-                        u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-                        
-                    if (user != null)
-                    {
-                        Preferences.Default.Set("CurrentUsername", user.Username);
-                        Preferences.Default.Set("CurrentFullName", user.FullName);
-                    }
-                });
+                // Get all users to check if email exists
+                var users = await GetAllUsers();
+                var user = users.FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
 
-                return true;
+                if (user == null)
+                {
+                    Debug.WriteLine($"Login failed: No account found with email {email}");
+                    throw new Exception("No account found with this email address.");
+                }
+
+                try
+                {
+                    // Attempt Firebase authentication
+                    var firebaseUser = await _firebaseAuthService.SignIn(email, password);
+                    
+                    // If we get here, authentication was successful
+                    // Store complete user info in preferences
+                    Preferences.Default.Set("CurrentEmail", email);
+                    Preferences.Default.Set("CurrentFullName", user.FullName);
+                    Preferences.Default.Set("CurrentUsername", user.Username ?? email);
+                    Debug.WriteLine($"Login successful: {email}, FullName={user.FullName}");
+                    
+                    return true;
+                }
+                catch (FirebaseAuthException firebaseEx)
+                {
+                    Debug.WriteLine($"Firebase auth failed: {firebaseEx.Message}");
+                    throw new Exception("Incorrect password. Please try again.");
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                Debug.WriteLine($"Login validation failed: {ex.Message}");
+                throw; // Rethrow the exception to be handled by the UI
             }
         }
 
@@ -220,107 +242,97 @@ namespace EducGramming.Services
         {
             try
             {
-                // First verify the old password is correct by signing in
+                if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(oldPassword) || string.IsNullOrWhiteSpace(newPassword))
+                {
+                    throw new Exception("Please fill in all fields.");
+                }
+
+                if (newPassword.Length < 6)
+                {
+                    throw new Exception("New password must be at least 6 characters long.");
+                }
+
                 try
                 {
-                    // Try to sign in with Firebase using the old password
-                    Debug.WriteLine($"Verifying old password for {email}");
-                    var firebaseUser = await _firebaseAuthService.SignIn(email, oldPassword);
-                    Debug.WriteLine("Old password verified successfully");
-                }
-                catch (FirebaseAuthException)
-                {
-                    // Verify with local storage as fallback
-                    var localUsers = await GetAllUsers();
-                    var localUser = localUsers.FirstOrDefault(u => 
-                        u.Email.Equals(email, StringComparison.OrdinalIgnoreCase) &&
-                        u.Password.Equals(oldPassword));
-                    
-                    if (localUser == null)
+                    // Change password in Firebase
+                    await _firebaseAuthService.ChangePasswordAsync(email, oldPassword, newPassword);
+                    Debug.WriteLine("Password changed successfully in Firebase");
+
+                    // Update password in local storage
+                    var allUsers = await GetAllUsers();
+                    var userToUpdate = allUsers.FirstOrDefault(u => 
+                        u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+
+                    if (userToUpdate != null)
                     {
-                        throw new Exception("Invalid old password.");
+                        userToUpdate.Password = newPassword;
+                        await SaveUsers(allUsers);
+                        Debug.WriteLine("Password updated in local storage");
                     }
-                }
 
-                // Send password reset email through Firebase
-                await _firebaseAuthService.SendPasswordResetEmailAsync(email);
-                
-                // Update password in local storage in the meantime
-                var allUsers = await GetAllUsers();
-                var userToUpdate = allUsers.FirstOrDefault(u => 
-                    u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-
-                if (userToUpdate != null)
-                {
-                    // Update password locally
-                    userToUpdate.Password = newPassword;
-                    await SaveUsers(allUsers);
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        await Application.Current.MainPage.DisplayAlert(
+                            "Success",
+                            "Your password has been changed successfully.",
+                            "OK");
+                    });
                 }
-                
-                Debug.WriteLine($"Password reset email sent for user: {email}");
-                
-                // Inform the user
-                await MainThread.InvokeOnMainThreadAsync(async () =>
+                catch (FirebaseAuthException authEx)
                 {
-                    await Application.Current.MainPage.DisplayAlert(
-                        "Password Reset",
-                        "A password reset email has been sent to your email address. Please check your inbox to complete the password change process.",
-                        "OK");
-                });
+                    Debug.WriteLine($"Firebase auth error: {authEx.Message}");
+                    throw new Exception("Invalid current password. Please try again.");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error during password change: {ex.Message}");
+                    throw new Exception("Failed to change password. Please try again later.");
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error changing password: {ex.Message}");
+                Debug.WriteLine($"Error in ChangePassword: {ex.Message}");
                 throw;
             }
         }
 
-        public async Task<UserData> GetCurrentUserProfile()
+        public async Task<UserProfile> GetCurrentUserProfile()
         {
             try
             {
-                Debug.WriteLine("Getting current user profile");
-                // Get the current email from preferences
-                string currentEmail = Preferences.Default.Get<string>("CurrentEmail", null);
-                
-                if (string.IsNullOrEmpty(currentEmail))
+                // For now, just return data from preferences
+                return new UserProfile
                 {
-                    Debug.WriteLine("No current user email found in preferences");
-                    return null;
-                }
-                
-                // Get all users
-                var users = await GetAllUsers();
-                
-                // Find the current user
-                var user = users.FirstOrDefault(u => u.Email.Equals(currentEmail, StringComparison.OrdinalIgnoreCase));
-                
-                if (user == null)
-                {
-                    Debug.WriteLine($"User with email {currentEmail} not found in local storage");
-                    
-                    // Create a basic profile based on preferences if not found in storage
-                    user = new UserData
-                    {
-                        Email = currentEmail,
-                        Username = Preferences.Default.Get<string>("CurrentUsername", currentEmail.Split('@')[0]),
-                        FullName = Preferences.Default.Get<string>("CurrentFullName", currentEmail.Split('@')[0]),
-                        Password = "********" // Never return actual password
-                    };
-                }
-                else
-                {
-                    Debug.WriteLine($"Found user profile for {currentEmail}");
-                    // Don't return the actual password
-                    user.Password = "********";
-                }
-                
-                return user;
+                    Email = Preferences.Default.Get<string>("CurrentEmail", ""),
+                    Username = Preferences.Default.Get<string>("CurrentUsername", ""),
+                    FullName = Preferences.Default.Get<string>("CurrentFullName", "")
+                };
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error getting current user profile: {ex.Message}");
+                Debug.WriteLine($"Error getting user profile: {ex.Message}");
                 return null;
+            }
+        }
+
+        public async Task<bool> UpdateUserProfile(UserProfile profile)
+        {
+            try
+            {
+                // Save to preferences
+                Preferences.Default.Set("CurrentEmail", profile.Email);
+                Preferences.Default.Set("CurrentUsername", profile.Username);
+                Preferences.Default.Set("CurrentFullName", profile.FullName);
+
+                // Here you would typically also update the profile in your backend
+                // For now, we'll just save to preferences
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating user profile: {ex.Message}");
+                return false;
             }
         }
 

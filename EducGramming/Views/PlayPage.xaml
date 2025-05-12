@@ -40,25 +40,40 @@
                        CornerRadius="10"
                        Padding="10,5"
                        HasShadow="False">
-                    <HorizontalStackLayout Spacing="3">
+                    <HorizontalStackLayout Spacing="3" x:Name="HeartsContainer">
                         <Label x:Name="Heart1"
                                Text="❤"
                                FontSize="26"
                                TextColor="#FF3B30"
-                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=1}"
-                               Opacity="1"/>
+                               Opacity="1"
+                               Scale="1"
+                               TranslationX="0"
+                               AnchorX="0.5"
+                               AnchorY="0.5"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
                         <Label x:Name="Heart2"
                                Text="❤"
                                FontSize="26"
                                TextColor="#FF3B30"
-                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=2}"
-                               Opacity="1"/>
+                               Opacity="1"
+                               Scale="1"
+                               TranslationX="0"
+                               AnchorX="0.5"
+                               AnchorY="0.5"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
                         <Label x:Name="Heart3"
                                Text="❤"
                                FontSize="26"
                                TextColor="#FF3B30"
-                               IsVisible="{Binding Lives, Converter={StaticResource IntToHeartVisibilityConverter}, ConverterParameter=3}"
-                               Opacity="1"/>
+                               Opacity="1"
+                               Scale="1"
+                               TranslationX="0"
+                               AnchorX="0.5"
+                               AnchorY="0.5"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
                     </HorizontalStackLayout>
                 </Frame>
 
@@ -209,6 +224,7 @@
                    HorizontalOptions="Center"/>
                 <Button Text="Play Again"
                         Command="{Binding RestartCommand}"
+                        Clicked="OnRestartClicked"
                         BackgroundColor="#1B3B6F"
                         TextColor="White"
                         FontAttributes="Bold"

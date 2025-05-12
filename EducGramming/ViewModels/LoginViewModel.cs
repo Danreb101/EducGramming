@@ -110,7 +110,7 @@ namespace EducGramming.ViewModels
         public LoginViewModel()
         {
             _userService = new UserService();
-            SignInCommand = new Command(async () => await SignInAsync());
+            SignInCommand = new Command(async () => await OnLoginClicked());
             TogglePasswordCommand = new Command(TogglePassword);
             RegisterCommand = new Command(async () => await NavigateToRegister());
             ForgotPasswordCommand = new Command(async () => await NavigateToResetPassword());
@@ -119,7 +119,7 @@ namespace EducGramming.ViewModels
             ClearSavedCredentials();
         }
 
-        private async Task SignInAsync()
+        private async Task OnLoginClicked()
         {
             if (IsBusy) return;
 
@@ -138,68 +138,42 @@ namespace EducGramming.ViewModels
                 // Clear any previous error message
                 ErrorMessage = string.Empty;
 
-                // Validate login credentials
-                bool isValid = await _userService.ValidateLogin(Email, Password);
-                
-                if (!isValid)
+                try
                 {
-                    // Try to get all users to check if the email exists
-                    var users = await _userService.GetAllUsers();
-                    var userExists = users.Any(u => u.Email.Equals(Email, StringComparison.OrdinalIgnoreCase));
-
-                    if (!userExists)
+                    // Validate login credentials
+                    bool isValid = await _userService.ValidateLogin(Email, Password);
+                    
+                    if (isValid)
                     {
-                        ErrorMessage = "No account found with this email address";
+                        // Save stay signed in preference
+                        Preferences.Default.Set("StaySignedIn", StaySignedIn);
+                        
+                        if (StaySignedIn)
+                        {
+                            Preferences.Default.Set("LastUsedEmail", Email);
+                            Debug.WriteLine("Saved login preferences for stay signed in");
+                        }
+                        else
+                        {
+                            Preferences.Default.Remove("LastUsedEmail");
+                            Debug.WriteLine("Cleared stay signed in preferences");
+                        }
+                        
+                        // Navigate to main app
+                        Debug.WriteLine("Login successful, navigating to AppShell");
+                        Application.Current.MainPage = new AppShell();
                     }
-                    else
-                    {
-                        ErrorMessage = "Incorrect password";
-                    }
-
-                    Debug.WriteLine($"Login validation failed: {ErrorMessage}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Login failed: {ex.Message}");
+                    ErrorMessage = ex.Message;
                     await Application.Current.MainPage.DisplayAlert("Login Failed", ErrorMessage, "OK");
                     
-                    if (!userExists)
-                    {
-                        // Clear both email and password if user doesn't exist
-                        Email = string.Empty;
-                        Password = string.Empty;
-                    }
-                    else
-                    {
-                        // Only clear password if user exists but password is wrong
-                        Password = string.Empty;
-                    }
+                    // Clear password field on error
+                    Password = string.Empty;
                     return;
                 }
-
-                Debug.WriteLine("Login successful");
-
-                // Save stay signed in preference and user credentials
-                Preferences.Default.Set("StaySignedIn", StaySignedIn);
-                
-                if (StaySignedIn)
-                {
-                    // Save all necessary credentials
-                    Preferences.Default.Set("LastUsedEmail", Email);
-                    Debug.WriteLine("Saved login preferences for stay signed in");
-                }
-                else
-                {
-                    // Only remove the stay signed in related preferences
-                    Preferences.Default.Remove("LastUsedEmail");
-                    Debug.WriteLine("Cleared stay signed in preferences");
-                }
-                
-                // NAVIGATION: To full app with tabs
-                Debug.WriteLine("Navigating to full app with tabs (AppShell)");
-                Application.Current.MainPage = new AppShell();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Login error: {ex.Message}");
-                ErrorMessage = $"Login failed: {ex.Message}";
-                await Application.Current.MainPage.DisplayAlert("Error", ErrorMessage, "OK");
             }
             finally
             {

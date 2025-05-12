@@ -39,57 +39,40 @@ namespace EducGramming.ViewModels
 
         public RegisterViewModel()
         {
-            try
-            {
-                _userService = new UserService();
-                RegisterCommand = new AsyncRelayCommand(RegisterAsync);
-                BackToLoginCommand = new AsyncRelayCommand(BackToLoginAsync);
-                TogglePasswordCommand = new RelayCommand(TogglePassword);
-                ShowTermsCommand = new RelayCommand(ShowTerms);
-                
-                // Initialize defaults
-                this.Email = string.Empty;
-                this.Password = string.Empty;
-                this.FullName = string.Empty;
-                
-                Debug.WriteLine("RegisterViewModel initialized successfully");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error initializing RegisterViewModel: {ex.Message}");
-            }
+            _userService = new UserService();
+            RegisterCommand = new Command(async () => await RegisterAsync());
+            BackToLoginCommand = new Command(async () => await NavigateToLogin());
+            TogglePasswordCommand = new Command(() => IsPasswordVisible = !IsPasswordVisible);
+            ShowTermsCommand = new Command(() => ShowTermsRequested?.Invoke(this, EventArgs.Empty));
         }
 
         private async Task RegisterAsync()
         {
             if (IsBusy) return;
 
+            if (string.IsNullOrWhiteSpace(Email) || 
+                string.IsNullOrWhiteSpace(Password) || 
+                string.IsNullOrWhiteSpace(FullName))
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Please fill in all fields", "OK");
+                return;
+            }
+
+            if (!IsTermsAccepted)
+            {
+                await Application.Current.MainPage.DisplayAlert("Error", "Please accept the terms and conditions", "OK");
+                return;
+            }
+
             try
             {
                 IsBusy = true;
 
-                if (string.IsNullOrWhiteSpace(Email) || 
-                    string.IsNullOrWhiteSpace(Password) || 
-                    string.IsNullOrWhiteSpace(FullName))
-                {
-                    await Application.Current.MainPage.DisplayAlert("Error", "Please fill in all fields", "OK");
-                    return;
-                }
+                // Register user with email, password, and full name only
+                await _userService.RegisterUser(Email, Password, FullName);
 
-                if (!IsTermsAccepted)
-                {
-                    await Application.Current.MainPage.DisplayAlert("Error", "Please accept the Terms and Conditions", "OK");
-                    return;
-                }
-
-                // Use email as username
-                string username = Email.Split('@')[0];
-
-                // Register user with Firebase through UserService
-                await _userService.RegisterUser(Email, Password, username, FullName);
-
-                await Application.Current.MainPage.DisplayAlert("Success", "Registration successful! Please login with your credentials.", "OK");
-                await BackToLoginAsync();
+                await Application.Current.MainPage.DisplayAlert("Success", "Registration successful! Please log in.", "OK");
+                await NavigateToLogin();
             }
             catch (Exception ex)
             {
@@ -101,33 +84,16 @@ namespace EducGramming.ViewModels
             }
         }
 
-        private async Task BackToLoginAsync()
+        private async Task NavigateToLogin()
         {
-            if (IsBusy) return;
-
             try
             {
-                IsBusy = true;
                 await Shell.Current.GoToAsync("//login");
             }
             catch (Exception ex)
             {
                 await Application.Current.MainPage.DisplayAlert("Error", "Navigation failed: " + ex.Message, "OK");
             }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        private void TogglePassword()
-        {
-            IsPasswordVisible = !IsPasswordVisible;
-        }
-
-        private void ShowTerms()
-        {
-            ShowTermsRequested?.Invoke(this, EventArgs.Empty);
         }
 
         public void HandleTermsAcceptance(bool accepted)
@@ -156,11 +122,8 @@ namespace EducGramming.ViewModels
                     return false;
                 }
 
-                // Use email as username
-                string username = Email.Split('@')[0];
-
                 // Register user with Firebase through UserService
-                await _userService.RegisterUser(Email, Password, username, FullName);
+                await _userService.RegisterUser(Email, Password, FullName);
                 return true;
             }
             catch (Exception ex)

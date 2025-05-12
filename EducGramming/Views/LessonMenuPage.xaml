@@ -6,65 +6,89 @@
              x:DataType="viewmodels:LessonViewModel"
              BackgroundColor="#17212B">
 
-    <Grid WidthRequest="260" 
-          HorizontalOptions="Start"
-          BackgroundColor="#17212B">
-        <ScrollView>
-            <VerticalStackLayout Spacing="0">
-                <CollectionView ItemsSource="{Binding LessonSections}">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="viewmodels:LessonSection">
-                            <Grid RowDefinitions="Auto,Auto">
-                                <!-- Section Header -->
-                                <Label Grid.Row="0"
-                                       Text="{Binding Title}"
-                                       TextColor="#8A8D91"
-                                       FontSize="13"
-                                       Margin="16,12,16,4"/>
+    <Grid>
+        <!-- Main Content -->
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header -->
+            <Grid Grid.Row="0" 
+                  Padding="16,12"
+                  ColumnDefinitions="Auto,*"
+                  BackgroundColor="#17212B">
+                <Label Grid.Column="1"
+                       Text="Learning Path"
+                       TextColor="#FFFFFF"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"/>
+            </Grid>
 
-                                <!-- Lessons List -->
-                                <CollectionView Grid.Row="1"
-                                              ItemsSource="{Binding Lessons}">
-                                    <CollectionView.ItemTemplate>
-                                        <DataTemplate x:DataType="viewmodels:LessonItem">
-                                            <Grid x:Name="menuItem"
-                                                  BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#2B5278:#17212B}"
-                                                  HeightRequest="44">
-                                                <Grid.GestureRecognizers>
-                                                    <TapGestureRecognizer 
-                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:LessonViewModel}}, Path=SelectLessonCommand}"
-                                                        CommandParameter="{Binding .}"
-                                                        Tapped="OnMenuItemTapped"/>
-                                                </Grid.GestureRecognizers>
-                                                
-                                                <Grid ColumnDefinitions="24,*" 
-                                                      Padding="16,0"
-                                                      VerticalOptions="Center">
-                                                    <!-- Icon/Number -->
-                                                    <Label Grid.Column="0"
-                                                           Text="{Binding Number}"
-                                                           TextColor="#8A8D91"
-                                                           FontSize="15"
-                                                           HorizontalOptions="Start"
-                                                           VerticalOptions="Center"/>
-                                                    
-                                                    <!-- Menu Item Text -->
-                                                    <Label Grid.Column="1"
-                                                           Text="{Binding Title}"
-                                                           TextColor="#FFFFFF"
-                                                           FontSize="15"
-                                                           Margin="16,0,0,0"
-                                                           VerticalOptions="Center"/>
+            <!-- Lesson Menu Content -->
+            <ScrollView Grid.Row="1">
+                <VerticalStackLayout Spacing="0">
+                    <CollectionView ItemsSource="{Binding LessonSections}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:LessonSection">
+                                <VerticalStackLayout>
+                                    <!-- Section Header -->
+                                    <Label Text="{Binding Title}"
+                                           TextColor="#8A8D91"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           Margin="16,20,16,10"/>
+
+                                    <!-- Lessons List -->
+                                    <CollectionView ItemsSource="{Binding Lessons}"
+                                                  Margin="0,0,0,20">
+                                        <CollectionView.ItemTemplate>
+                                            <DataTemplate x:DataType="viewmodels:LessonItem">
+                                                <Grid BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#2B5278:#17212B}"
+                                                      HeightRequest="60"
+                                                      Opacity="{Binding IsLocked, Converter={StaticResource BoolToColorConverter}, ConverterParameter=0.5:1}"
+                                                      InputTransparent="{Binding IsLocked}">
+                                                    <Grid.GestureRecognizers>
+                                                        <TapGestureRecognizer 
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:LessonViewModel}}, Path=SelectLessonCommand}"
+                                                            CommandParameter="{Binding Number}"
+                                                            Tapped="OnMenuItemTapped"/>
+                                                    </Grid.GestureRecognizers>
+
+                                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                                        <!-- Lesson Number -->
+                                                        <Label Grid.Column="0"
+                                                               Text="{Binding Number}"
+                                                               TextColor="#8A8D91"
+                                                               FontSize="16"
+                                                               WidthRequest="30"
+                                                               HorizontalOptions="Start"
+                                                               VerticalOptions="Center"/>
+
+                                                        <!-- Lesson Title -->
+                                                        <Label Grid.Column="1"
+                                                               Text="{Binding Title}"
+                                                               TextColor="{Binding IsLocked, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#8A8D91:White}"
+                                                               FontSize="16"
+                                                               Margin="10,0,0,0"
+                                                               VerticalOptions="Center"/>
+
+                                                        <!-- Status Icon -->
+                                                        <Label Grid.Column="2"
+                                                               Text="{Binding StatusIcon}"
+                                                               TextColor="{Binding IsCompleted, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#4CAF50:#8A8D91}"
+                                                               FontSize="20"
+                                                               Margin="10,0,16,0"
+                                                               HorizontalOptions="End"
+                                                               VerticalOptions="Center"/>
+                                                    </Grid>
                                                 </Grid>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </CollectionView.ItemTemplate>
-                                </CollectionView>
-                            </Grid>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </VerticalStackLayout>
-        </ScrollView>
+                                            </DataTemplate>
+                                        </CollectionView.ItemTemplate>
+                                    </CollectionView>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
     </Grid>
 </ContentPage> 

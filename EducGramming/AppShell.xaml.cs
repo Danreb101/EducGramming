@@ -5,50 +5,17 @@ namespace EducGramming;
 
 public partial class AppShell : Shell
 {
+    private bool _isInitialized = false;
+    
     public AppShell()
     {
         Debug.WriteLine("======= INITIALIZING APPSHELL =======");
         
         try
         {
-            // Initialize the component
             InitializeComponent();
-            
-            // Register routes for navigation
             RegisterRoutes();
-            
-            // Force Home tab selection on startup - this is critical
-            Debug.WriteLine("Selecting Home tab on startup");
-            
-            // Small delay to ensure UI is ready
-            MainThread.BeginInvokeOnMainThread(async () => 
-            {
-                await Task.Delay(100);
-                
-                try
-                {
-                    if (Items.Count > 0)
-                    {
-                        Debug.WriteLine($"Shell has {Items.Count} items");
-                        CurrentItem = Items[0]; // Should be the TabBar
-                        
-                        if (CurrentItem is TabBar tabBar)
-                        {
-                            Debug.WriteLine($"TabBar has {tabBar.Items.Count} tabs");
-                            if (tabBar.Items.Count > 0)
-                            {
-                                // Force select first tab (Home)
-                                tabBar.CurrentItem = tabBar.Items[0];
-                                Debug.WriteLine($"Selected tab: {tabBar.CurrentItem?.Title ?? "unknown"}");
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error selecting Home tab: {ex.Message}");
-                }
-            });
+            InitializeNavigation();
             
             Debug.WriteLine("AppShell initialized successfully");
         }
@@ -59,6 +26,50 @@ public partial class AppShell : Shell
         }
         
         Debug.WriteLine("======= APPSHELL INITIALIZATION COMPLETE =======");
+    }
+    
+    private async void InitializeNavigation()
+    {
+        if (_isInitialized) return;
+        
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                await Task.Delay(150); // Increased delay for UI readiness
+                
+                if (Items?.Count > 0)
+                {
+                    CurrentItem = Items[0];
+                    
+                    if (CurrentItem is TabBar tabBar && tabBar.Items?.Count > 0)
+                    {
+                        tabBar.CurrentItem = tabBar.Items[0];
+                        Debug.WriteLine($"Selected tab: {tabBar.CurrentItem?.Title ?? "unknown"}");
+                    }
+                }
+                
+                _isInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Navigation initialization error: {ex.Message}");
+            }
+        });
+    }
+    
+    protected override void OnNavigating(ShellNavigatingEventArgs args)
+    {
+        base.OnNavigating(args);
+        
+        // Prevent navigation while initialization is in progress
+        if (!_isInitialized && args.Source != ShellNavigationSource.ShellSectionChanged)
+        {
+            args.Cancel();
+            return;
+        }
+        
+        Debug.WriteLine($"Navigating to: {args.Target?.Location?.OriginalString ?? "unknown"}");
     }
     
     private void RegisterRoutes()
@@ -73,8 +84,12 @@ public partial class AppShell : Shell
         
         // Register lesson routes
         Routing.RegisterRoute("lessonmenu", typeof(Views.LessonMenuPage));
+        Routing.RegisterRoute("lesson", typeof(Views.LessonPage));
         
-        // Register any other routes here
+        // Register other main routes
+        Routing.RegisterRoute("play", typeof(Views.PlayPage));
+        Routing.RegisterRoute("leaderboard", typeof(Views.LeaderboardPage));
+        Routing.RegisterRoute("profile", typeof(Views.ProfilePage));
         
         Debug.WriteLine("Routes registered successfully");
     }

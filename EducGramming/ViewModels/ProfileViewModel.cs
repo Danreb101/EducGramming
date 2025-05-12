@@ -10,6 +10,7 @@ namespace EducGramming.ViewModels
 {
     public class ProfileViewModel : INotifyPropertyChanged
     {
+        private bool _isBusy;
         private string _username;
         public string Username
         {
@@ -122,10 +123,24 @@ namespace EducGramming.ViewModels
             }
         }
 
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                if (_isBusy != value)
+                {
+                    _isBusy = value;
+                    OnPropertyChanged(nameof(IsBusy));
+                }
+            }
+        }
+
         public ICommand LogoutCommand { get; }
         public ICommand ChangePasswordCommand { get; }
         public ICommand DeleteAccountCommand { get; }
         public ICommand ShowAdminCommand { get; }
+        public ICommand EditNameCommand { get; }
 
         private readonly UserService _userService;
         private FirebaseAuthService _firebaseAuthService;
@@ -144,6 +159,7 @@ namespace EducGramming.ViewModels
             ChangePasswordCommand = new Command(OnChangePassword);
             DeleteAccountCommand = new Command<string>(OnDeleteAccount);
             ShowAdminCommand = new Command(OnShowAdmin);
+            EditNameCommand = new Command(async () => await OnEditName());
             
             // Initialize properties
             IsAdmin = false;
@@ -322,6 +338,71 @@ namespace EducGramming.ViewModels
             catch (Exception ex)
             {
                 await Application.Current.MainPage.DisplayAlert("Error", $"Failed to delete account: {ex.Message}", "OK");
+            }
+        }
+
+        private async Task OnEditName()
+        {
+            if (IsBusy) return;
+
+            try
+            {
+                IsBusy = true;
+
+                string result = await Application.Current.MainPage.DisplayPromptAsync(
+                    "Edit Name",
+                    "Enter your new name:",
+                    initialValue: FullName,
+                    maxLength: 50,
+                    keyboard: Keyboard.Text
+                );
+
+                if (!string.IsNullOrWhiteSpace(result) && result != FullName)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        try
+                        {
+                            // Update the name locally first
+                            FullName = result;
+                            Preferences.Default.Set("CurrentFullName", FullName);
+                            
+                            // Update in user service
+                            bool success = await _userService.UpdateUserProfile(new UserProfile
+                            {
+                                Email = Email,
+                                Username = Username,
+                                FullName = FullName
+                            });
+
+                            if (success)
+                            {
+                                await Application.Current.MainPage.DisplayAlert(
+                                    "Success",
+                                    "Your name has been updated successfully!",
+                                    "OK"
+                                );
+                            }
+                            else
+                            {
+                                throw new Exception("Failed to update profile");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Error updating name: {ex.Message}");
+                            await Application.Current.MainPage.DisplayAlert(
+                                "Error",
+                                "Failed to update your name. Please try again.",
+                                "OK"
+                            );
+                        }
+                    });
+                }
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 

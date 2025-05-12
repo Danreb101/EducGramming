@@ -15,16 +15,17 @@
                   ColumnDefinitions="Auto,*"
                   BackgroundColor="#17212B">
                 <!-- Hamburger Menu Button -->
-                <Button Grid.Column="0"
+                <Button x:Name="HamburgerButton"
+                        Grid.Column="0"
                         Text="☰"
                         FontSize="24"
-                        TextColor="#8A8D91"
+                        TextColor="#FFFFFF"
                         BackgroundColor="Transparent"
-                        Padding="0"
+                        Padding="8"
                         Margin="0,0,16,0"
-                        HeightRequest="32"
-                        WidthRequest="32"
-                        Command="{Binding ToggleSidebarCommand}"
+                        HeightRequest="40"
+                        WidthRequest="40"
+                        Clicked="OnHamburgerMenuClicked"
                         HorizontalOptions="Start"
                         VerticalOptions="Center"/>
                 <Label Grid.Column="1"
@@ -124,22 +125,16 @@
             </Grid>
         </Grid>
 
-        <!-- Sidebar Overlay (must be last/topmost) -->
+        <!-- Sidebar Overlay -->
         <Grid x:Name="SidebarOverlay"
-              IsVisible="{Binding IsSidebarVisible}"
-              BackgroundColor="#00000080"
-              InputTransparent="False">
-            <Grid.GestureRecognizers>
-                <TapGestureRecognizer Command="{Binding ToggleSidebarCommand}"/>
-            </Grid.GestureRecognizers>
+              BackgroundColor="#00000080">
             <!-- Sidebar Panel -->
             <Grid x:Name="SidebarPanel"
                   WidthRequest="260"
                   BackgroundColor="#17212B"
                   HorizontalOptions="Start"
-                  VerticalOptions="Fill"
-                  Padding="0"
-                  TranslationX="-260">
+                  VerticalOptions="Fill">
+                
                 <!-- Close Button -->
                 <Button Text="✕"
                         BackgroundColor="Transparent"
@@ -150,11 +145,13 @@
                         Margin="0,12,8,0"
                         HeightRequest="32"
                         WidthRequest="32"
-                        Command="{Binding ToggleSidebarCommand}"/>
+                        Clicked="OnHamburgerMenuClicked"/>
+
                 <!-- Sidebar Content -->
                 <ScrollView Margin="0,48,0,0">
                     <VerticalStackLayout Spacing="0">
-                        <CollectionView ItemsSource="{Binding LessonSections}">
+                        <CollectionView ItemsSource="{Binding LessonSections}"
+                                      SelectionMode="None">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodels:LessonSection">
                                     <VerticalStackLayout>
@@ -168,29 +165,48 @@
                                                 <Label Grid.Column="0"
                                                        Text="{Binding Title}"
                                                        TextColor="#8A8D91"
-                                                       FontSize="13"/>
+                                                       FontSize="16"
+                                                       FontAttributes="Bold"/>
                                                 <Label Grid.Column="1"
                                                        Text="{Binding IsExpanded, Converter={StaticResource BoolToExpandCollapseIconConverter}}"
                                                        TextColor="#8A8D91"
-                                                       FontSize="13"/>
+                                                       FontSize="16"/>
                                             </Grid>
                                         </Grid>
                                         <!-- Lessons -->
                                         <CollectionView ItemsSource="{Binding Lessons}"
-                                                      IsVisible="{Binding IsExpanded}">
+                                                      IsVisible="{Binding IsExpanded}"
+                                                      SelectionMode="None">
                                             <CollectionView.ItemTemplate>
                                                 <DataTemplate x:DataType="viewmodels:LessonItem">
                                                     <Grid BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#2B5278:#17212B}"
-                                                          HeightRequest="44">
+                                                          HeightRequest="44"
+                                                          Opacity="{Binding IsLocked, Converter={StaticResource BoolToColorConverter}, ConverterParameter=0.5:1}"
+                                                          InputTransparent="{Binding IsLocked}">
                                                         <Grid.GestureRecognizers>
                                                             <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:LessonViewModel}}, Path=SelectLessonCommand}"
-                                                                                CommandParameter="{Binding .}"/>
+                                                                                CommandParameter="{Binding Number}"/>
                                                         </Grid.GestureRecognizers>
-                                                        <Label Text="{Binding Title}"
-                                                               TextColor="White"
-                                                               FontSize="15"
-                                                               Margin="16,0"
-                                                               VerticalOptions="Center"/>
+                                                        <Grid ColumnDefinitions="Auto,*,Auto" 
+                                                              Padding="16,0"
+                                                              VerticalOptions="Center">
+                                                            <Label Grid.Column="0"
+                                                                   Text="{Binding Number}"
+                                                                   TextColor="#8A8D91"
+                                                                   FontSize="14"
+                                                                   WidthRequest="30"/>
+                                                            <Label Grid.Column="1"
+                                                                   Text="{Binding Title}"
+                                                                   TextColor="{Binding IsLocked, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#8A8D91:White}"
+                                                                   FontSize="14"/>
+                                                            <Label Grid.Column="2"
+                                                                   Text="{Binding StatusIcon}"
+                                                                   TextColor="{Binding IsCompleted, Converter={StaticResource BoolToColorConverter}, ConverterParameter=#4CAF50:#8A8D91}"
+                                                                   FontSize="18"
+                                                                   Margin="10,0,0,0"
+                                                                   HorizontalOptions="End"
+                                                                   VerticalOptions="Center"/>
+                                                        </Grid>
                                                     </Grid>
                                                 </DataTemplate>
                                             </CollectionView.ItemTemplate>
