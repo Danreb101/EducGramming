@@ -26,7 +26,7 @@
                        TextColor="#333333"
                        Margin="0,0,0,10"/>
 
-                <Label Text="{Binding CurrentUsername}"
+                <Label Text="{Binding CurrentName}"
                        Grid.Row="1"
                        Grid.Column="0"
                        FontSize="16"
@@ -60,16 +60,19 @@
                         <Label Text="Rank"
                                Grid.Column="0"
                                FontAttributes="Bold"
-                               TextColor="#333333"/>
-                        <Label Text="Username"
+                               TextColor="#333333"
+                               HorizontalOptions="Start"/>
+                        <Label Text="Name"
                                Grid.Column="1"
                                FontAttributes="Bold"
                                TextColor="#333333"
-                               Margin="15,0"/>
+                               Margin="15,0"
+                               HorizontalOptions="Center"/>
                         <Label Text="Score"
                                Grid.Column="2"
                                FontAttributes="Bold"
-                               TextColor="#333333"/>
+                               TextColor="#333333"
+                               HorizontalOptions="End"/>
                     </Grid>
                 </CollectionView.Header>
                 <CollectionView.ItemTemplate>
@@ -80,16 +83,19 @@
                             <Label Text="{Binding Rank}"
                                    Grid.Column="0"
                                    TextColor="#666666"
-                                   FontSize="16"/>
-                            <Label Text="{Binding Username}"
+                                   FontSize="16"
+                                   HorizontalOptions="Start"/>
+                            <Label Text="{Binding Name}"
                                    Grid.Column="1"
                                    TextColor="#666666"
                                    FontSize="16"
-                                   Margin="15,0"/>
+                                   Margin="15,0"
+                                   HorizontalOptions="Center"/>
                             <Label Text="{Binding Score}"
                                    Grid.Column="2"
                                    TextColor="#666666"
-                                   FontSize="16"/>
+                                   FontSize="16"
+                                   HorizontalOptions="End"/>
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

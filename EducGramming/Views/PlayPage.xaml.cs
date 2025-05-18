@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Threading;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Plugin.Maui.Audio;
 
 namespace EducGramming.Views;
 
@@ -15,10 +16,10 @@ public partial class PlayPage : ContentPage
     private bool _isAnimatingHearts = false;
     private CancellationTokenSource _animationCancellation;
 
-    public PlayPage(PlayViewModel viewModel)
+    public PlayPage(IAudioManager audioManager)
     {
         InitializeComponent();
-        _viewModel = viewModel;
+        _viewModel = new PlayViewModel(audioManager);
         BindingContext = _viewModel;
         _animationCancellation = new CancellationTokenSource();
 
@@ -31,6 +32,7 @@ public partial class PlayPage : ContentPage
 
         // Subscribe to Lives property changes
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        _viewModel.HeartFadeRequested += OnHeartFadeRequested;
     }
 
     protected override void OnAppearing()
@@ -154,48 +156,39 @@ public partial class PlayPage : ContentPage
     // MASTER HEART CONTROL - Keep fade animations but simplify
     private async Task UpdateHeartDisplayMinecraft(int liveCount)
     {
-        // Prevent animation conflicts
         if (_isAnimatingHearts) return;
         _isAnimatingHearts = true;
-        
         try
         {
-            // Create a new cancellation token for this animation
             using (var animationCts = CancellationTokenSource.CreateLinkedTokenSource(_animationCancellation.Token))
             {
                 await MainThread.InvokeOnMainThreadAsync(async () => {
-                    // Safety: Reset all hearts to known state first
                     Heart1.TranslationX = Heart2.TranslationX = Heart3.TranslationX = 0;
                     Heart1.TranslationY = Heart2.TranslationY = Heart3.TranslationY = 0;
                     Heart1.Rotation = Heart2.Rotation = Heart3.Rotation = 0;
-                    
-                    // ONLY ANIMATE HEART LOSS (fading), not heart gain
+
+                    // Always fade the rightmost visible heart (3, 2, 1)
                     if (_previousLives > liveCount)
                     {
-                        // DAMAGE: Hearts being lost with fade animations
-                        if (_previousLives >= 3 && liveCount < 3)
+                        if (_previousLives == 3 && liveCount == 2)
                         {
                             await AnimateHeartDamageMinecraft(Heart3, animationCts.Token);
                         }
-                        
-                        if (_previousLives >= 2 && liveCount < 2 && !animationCts.Token.IsCancellationRequested)
+                        else if (_previousLives == 2 && liveCount == 1)
                         {
                             await AnimateHeartDamageMinecraft(Heart2, animationCts.Token);
                         }
-                        
-                        if (_previousLives >= 1 && liveCount < 1 && !animationCts.Token.IsCancellationRequested)
+                        else if (_previousLives == 1 && liveCount == 0)
                         {
                             await AnimateHeartDamageMinecraft(Heart1, animationCts.Token);
                         }
                     }
                     else if (_previousLives < liveCount)
                     {
-                        // INSTANT RESTORATION: No animation for heart gain
                         SetHeartStates(liveCount);
                     }
                     else
                     {
-                        // Direct heart state update without animation
                         SetHeartStates(liveCount);
                     }
                 });
@@ -204,8 +197,6 @@ public partial class PlayPage : ContentPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error in heart animation: {ex.Message}");
-            
-            // If something goes wrong, just directly set heart states
             await MainThread.InvokeOnMainThreadAsync(() => {
                 SetHeartStates(liveCount);
             });
@@ -313,13 +304,9 @@ public partial class PlayPage : ContentPage
             if (e.PropertyName == nameof(_viewModel.Lives))
             {
                 var currentLives = _viewModel.Lives;
-                
-                // Only animate if lives actually changed
-                if (currentLives != _previousLives)
-                {
-                    await UpdateHeartDisplayMinecraft(currentLives);
-                    _previousLives = currentLives;
-                }
+                // Always animate heart fade immediately when lives decrease
+                await UpdateHeartDisplayMinecraft(currentLives);
+                _previousLives = currentLives;
             }
         }
         catch (Exception)
@@ -358,17 +345,16 @@ public partial class PlayPage : ContentPage
         catch { /* Ignore failures to change background color */ }
     }
 
-    private async void OnDrop(object sender, DropEventArgs e)
+    private void OnDrop(object sender, DropEventArgs e)
     {
         try
         {
             AnswerDropZone.BackgroundColor = new Color(27, 59, 111);
-
             if (e.Data.Properties.TryGetValue("Answer", out var answer) && answer is string answerText)
             {
-                // Check if the answer is correct
-                await _viewModel.CheckAnswerAsync(answerText);
-                // Heart animation is handled in OnViewModelPropertyChanged
+                _viewModel.DroppedAnswer = answerText;
+                _viewModel.CheckAnswer(answerText);
+                // Heart animation is now always handled in OnViewModelPropertyChanged
             }
         }
         catch (Exception)
@@ -486,5 +472,12 @@ public partial class PlayPage : ContentPage
                 catch { /* Final fail-safe - nothing more we can do */ }
             });
         }
+    }
+
+    private async void OnHeartFadeRequested()
+    {
+        // Wait for the heart fade animation to complete, then continue
+        await UpdateHeartDisplayMinecraft(_viewModel.Lives);
+        _viewModel.ContinueAfterHeartFade();
     }
 } 

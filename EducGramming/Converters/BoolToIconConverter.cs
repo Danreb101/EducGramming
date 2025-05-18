@@ -6,11 +6,11 @@ namespace EducGramming.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool isCompleted)
+            if (value is bool isWrong)
             {
-                return isCompleted ? "checkmark.png" : "lock.png";
+                return isWrong ? "❌" : "✅";
             }
-            return "lock.png";
+            return string.Empty;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

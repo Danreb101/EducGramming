@@ -50,22 +50,22 @@ namespace EducGramming.Services
 
         public async Task<ObservableCollection<LeaderboardEntry>> GetLeaderboardAsync()
         {
-            var currentUsername = Preferences.Default.Get("CurrentUsername", "Player");
+            var currentName = Preferences.Default.Get("CurrentName", "Player");
             foreach (var entry in _leaderboard)
             {
-                entry.IsCurrentUser = entry.Username == currentUsername;
+                entry.IsCurrentUser = entry.Name == currentName;
             }
             return _leaderboard;
         }
 
-        public async Task UpdateScoreAsync(string username, int score)
+        public async Task UpdateScoreAsync(string name, int score)
         {
-            var entry = _leaderboard.FirstOrDefault(e => e.Username == username);
+            var entry = _leaderboard.FirstOrDefault(e => e.Name == name);
             if (entry == null)
             {
                 entry = new LeaderboardEntry
                 {
-                    Username = username,
+                    Name = name,
                     Score = score,
                     LastUpdated = DateTime.Now
                 };
@@ -81,15 +81,15 @@ namespace EducGramming.Services
             SaveLeaderboard();
         }
 
-        public async Task<int> GetUserRankAsync(string username)
+        public async Task<int> GetUserRankAsync(string name)
         {
-            var entry = _leaderboard.FirstOrDefault(e => e.Username == username);
+            var entry = _leaderboard.FirstOrDefault(e => e.Name == name);
             return entry?.Rank ?? 0;
         }
 
-        public async Task<int> GetUserScoreAsync(string username)
+        public async Task<int> GetUserScoreAsync(string name)
         {
-            var entry = _leaderboard.FirstOrDefault(e => e.Username == username);
+            var entry = _leaderboard.FirstOrDefault(e => e.Name == name);
             return entry?.Score ?? 0;
         }
     }

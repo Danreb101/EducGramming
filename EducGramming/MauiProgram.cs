@@ -7,6 +7,7 @@ using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.DependencyInjection;
+using Plugin.Maui.Audio;
 
 namespace EducGramming;
 
@@ -28,6 +29,7 @@ public static class MauiProgram
         // Register services
         builder.Services.AddSingleton<ILeaderboardService, LeaderboardService>();
         builder.Services.AddSingleton<FirebaseAuthService>();
+        builder.Services.AddSingleton(AudioManager.Current);
 
         // Register converters as singletons
         builder.Services.AddSingleton<BoolToColorConverter>();

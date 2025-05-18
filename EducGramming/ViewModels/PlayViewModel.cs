@@ -4,6 +4,11 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Microsoft.Maui.Storage;
 using Microsoft.Maui.Controls;
+using Plugin.Maui.Audio;
+using System.IO;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
 
 namespace EducGramming.ViewModels
 {
@@ -26,8 +31,41 @@ namespace EducGramming.ViewModels
         private string _lastWrongAnswer = "";
         private string _feedbackMessage = "";
         private bool _isHeartAnimating;
+        private readonly IAudioManager _audioManager;
+        private IAudioPlayer? _correctSoundPlayer;
+        private IAudioPlayer? _wrongSoundPlayer;
+        private IAudioPlayer? _failSoundPlayer;
+        private List<(string Language, string Question, string[] Options, string Answer)> _allQuestions;
+        private List<int> _remainingQuestionIndices;
+        private int _currentQuestionIndex = -1;
+        private string _currentLanguage;
+        private bool _isProcessingAnswer = false;
+        public string CurrentLanguage
+        {
+            get => _currentLanguage;
+            set { _currentLanguage = value; OnPropertyChanged(); }
+        }
+        private Color _currentLanguageColor;
+        public Color CurrentLanguageColor
+        {
+            get => _currentLanguageColor;
+            set { _currentLanguageColor = value; OnPropertyChanged(); }
+        }
+        private string _droppedAnswer;
+        public string DroppedAnswer
+        {
+            get => _droppedAnswer;
+            set { _droppedAnswer = value; OnPropertyChanged(); }
+        }
+        private bool _feedbackVisible;
+        public bool FeedbackVisible
+        {
+            get => _feedbackVisible;
+            set { _feedbackVisible = value; OnPropertyChanged(); }
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
+        public event Action HeartFadeRequested;
 
         public bool IsBusy
         {
@@ -217,8 +255,9 @@ namespace EducGramming.ViewModels
         public ICommand CloseCommand { get; private set; }
         public ICommand CheckAnswerCommand { get; private set; }
 
-        public PlayViewModel()
+        public PlayViewModel(IAudioManager audioManager)
         {
+            _audioManager = audioManager;
             _answerOptions = new ObservableCollection<string>();
             RestartCommand = new Command(RestartFromGameOver);
             CloseCommand = new Command(CloseGame);
@@ -231,6 +270,7 @@ namespace EducGramming.ViewModels
             _timer.Interval = TimeSpan.FromSeconds(1);
             _timer.Tick += Timer_Tick;
 
+            InitializeQuestionBank();
             InitializeGame();
         }
 
@@ -242,21 +282,9 @@ namespace EducGramming.ViewModels
             }
             else
             {
-                if (Lives > 0)
-                {
-                    Lives--;
-                    if (Lives <= 0)
-                    {
-                        EndGame(); // This sets IsGameOver = true to show the overlay
-                        SaveHighScore();
-                        // No popup dialog, only the Game Over overlay
-                    }
-                    else
-                    {
-                        LoadNextQuestion();
-                        TimeRemaining = 30; // Reset timer for next question
-                    }
-                }
+                // Time is up, treat as game over
+                EndGame();
+                SaveHighScore();
             }
         }
 
@@ -284,36 +312,61 @@ namespace EducGramming.ViewModels
             _timer.Start();
         }
 
+        private void InitializeQuestionBank()
+        {
+            _allQuestions = new List<(string, string, string[], string)>
+            {
+                ("C#", "Which keyword is used to define a method that can be overridden in a derived class?",
+                    new[] { "static", "virtual", "override", "sealed" }, "virtual"),
+                ("Java", "You want to make a method accessible without creating an instance. What keyword should you use?",
+                    new[] { "final", "private", "static", "protected" }, "static"),
+                ("C#", "How do you write a comment that spans only one line in C#?",
+                    new[] { "// This is a comment", "# This is a comment", "/* This is a comment */", "-- This is a comment" }, "// This is a comment"),
+                ("Java", "Which exception is thrown when a null object is accessed in Java?",
+                    new[] { "NullPointerException", "IOException", "ArrayIndexOutOfBoundsException", "RuntimeException" }, "NullPointerException"),
+                ("Java", "What is the correct way to declare a main method in Java?",
+                    new[] { "public static void main(String[] args)", "void main(String[] args)", "static void Main(string[] args)", "Main(String[] args)" }, "public static void main(String[] args)"),
+            };
+            ShuffleQuestions();
+        }
+
+        private void ShuffleQuestions()
+        {
+            var indices = Enumerable.Range(0, _allQuestions.Count).ToList();
+            var rng = new Random();
+            for (int i = indices.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                (indices[i], indices[j]) = (indices[j], indices[i]);
+            }
+            _remainingQuestionIndices = indices;
+        }
+
         private void LoadNextQuestion()
         {
             LastWrongAnswer = "";
             FeedbackMessage = "";
+            FeedbackVisible = false;
             IsWrongAnswer = false;
-            
-            // Reset timer for new question
+            DroppedAnswer = null;
             TimeRemaining = 30;
-
-            // Example question (you'll need to implement your own question bank)
-            var questions = new List<(string Question, string[] Options, string Answer)>
+            if (_remainingQuestionIndices == null || _remainingQuestionIndices.Count == 0)
             {
-                ("Which collection in C# allows key-value pairs?", 
-                 new[] { "LIST<T>", "DICTIONARY<K,V>", "ARRAY[]" }, 
-                 "DICTIONARY<K,V>"),
-                ("What is the base class for all classes in C#?", 
-                 new[] { "Object", "Base", "Class" }, 
-                 "Object"),
-                ("Which keyword is used to prevent inheritance in C#?", 
-                 new[] { "static", "sealed", "final" }, 
-                 "sealed"),
-            };
-
-            var random = new Random();
-            var questionIndex = random.Next(questions.Count);
-            var selectedQuestion = questions[questionIndex];
-
+                ShuffleQuestions();
+            }
+            if (_currentQuestionIndex != -1 && _remainingQuestionIndices.Contains(_currentQuestionIndex))
+                _remainingQuestionIndices.Remove(_currentQuestionIndex);
+            if (_remainingQuestionIndices.Count == 0)
+            {
+                ShuffleQuestions();
+            }
+            _currentQuestionIndex = _remainingQuestionIndices[0];
+            _remainingQuestionIndices.RemoveAt(0);
+            var selectedQuestion = _allQuestions[_currentQuestionIndex];
+            CurrentLanguage = selectedQuestion.Language;
+            CurrentLanguageColor = selectedQuestion.Language == "C#" ? Color.FromArgb("#FFD600") : Color.FromArgb("#2979FF");
             CurrentQuestion = selectedQuestion.Question;
             _correctAnswer = selectedQuestion.Answer;
-
             AnswerOptions.Clear();
             foreach (var option in selectedQuestion.Options)
             {
@@ -321,31 +374,56 @@ namespace EducGramming.ViewModels
             }
         }
 
-        private async void CheckAnswer(string answer)
+        public void CheckAnswer(string answer)
         {
-            // Prevent multiple answers while processing
-            if (IsWrongAnswer) return;
+            if (IsGameOver) return;
+            if (_isProcessingAnswer) return; // Prevent double-processing
+            _isProcessingAnswer = true;
 
+            DroppedAnswer = answer;
             if (answer == _correctAnswer)
             {
-                IsWrongAnswer = false;  // This will make the feedback green
-                Score += 1;
+                IsWrongAnswer = false;
                 FeedbackMessage = "Correct Answer";
-                await Task.Delay(1000); // Show feedback for 1 second
-                LoadNextQuestion();
+                FeedbackVisible = true;
+                PlayCorrectSound();
+                Score += 1;
+                Device.StartTimer(TimeSpan.FromMilliseconds(900), () => {
+                    FeedbackVisible = false;
+                    _isProcessingAnswer = false;
+                    LoadNextQuestion();
+                    return false;
+                });
             }
             else
             {
-                IsWrongAnswer = true;  // This will make the feedback red
+                IsWrongAnswer = true;
                 LastWrongAnswer = answer;
                 FeedbackMessage = "Wrong Answer";
-                
-                // Decrease lives immediately and wait for animation
-                await HandleWrongAnswer();
-                
-                // Keep wrong answer feedback visible for a moment before resetting
-                await Task.Delay(1000);
-                IsWrongAnswer = false;
+                FeedbackVisible = true;
+                PlayWrongSound();
+                if (_currentQuestionIndex != -1 && _remainingQuestionIndices.Contains(_currentQuestionIndex))
+                    _remainingQuestionIndices.Remove(_currentQuestionIndex);
+                Lives--;
+                if (Lives <= 0)
+                {
+                    Device.StartTimer(TimeSpan.FromMilliseconds(600), () => {
+                        IsGameOver = true;
+                        PlayFailSound();
+                        SaveHighScore();
+                        _isProcessingAnswer = false;
+                        return false;
+                    });
+                    return;
+                }
+                // Show feedback for a very short time, then load next question
+                Device.StartTimer(TimeSpan.FromMilliseconds(200), () => {
+                    FeedbackVisible = false;
+                    IsWrongAnswer = false;
+                    _isProcessingAnswer = false;
+                    LoadNextQuestion();
+                    return false;
+                });
             }
         }
 
@@ -394,6 +472,7 @@ namespace EducGramming.ViewModels
         {
             _timer.Stop();
             IsGameOver = true;
+            PlayFailSound();
             SaveHighScore();
         }
 
@@ -444,7 +523,7 @@ namespace EducGramming.ViewModels
             }
         }
 
-        public async Task HandleWrongAnswer()
+        public void HandleWrongAnswer()
         {
             // This method is now deprecated and functionality is moved to CheckAnswerAsync
             // Keeping minimal implementation for backward compatibility
@@ -454,62 +533,41 @@ namespace EducGramming.ViewModels
             }
         }
 
-        public async Task<bool> CheckAnswerAsync(string answer)
+        public bool CheckAnswerSync(string answer)
         {
-            try
+            if (IsWrongAnswer) return false;
+            bool isCorrect = answer == _correctAnswer;
+            if (isCorrect)
             {
-                if (IsWrongAnswer) return false;
-
-                bool isCorrect = answer == _correctAnswer;
-                
-                if (isCorrect)
+                IsWrongAnswer = false;
+                Score += 1;
+                FeedbackMessage = "Correct Answer";
+                PlayCorrectSound();
+                LoadNextQuestion();
+            }
+            else
+            {
+                IsWrongAnswer = true;
+                LastWrongAnswer = answer;
+                FeedbackMessage = "Wrong Answer";
+                PlayWrongSound();
+                if (_currentQuestionIndex != -1 && _remainingQuestionIndices.Contains(_currentQuestionIndex))
+                    _remainingQuestionIndices.Remove(_currentQuestionIndex);
+                if (Lives > 0)
                 {
-                    IsWrongAnswer = false;
-                    Score += 1;
-                    FeedbackMessage = "Correct Answer";
-                    
-                    // Show feedback for a moment before moving to next question
-                    await Task.Delay(1000);
-                    LoadNextQuestion();
-                }
-                else
-                {
-                    IsWrongAnswer = true;
-                    LastWrongAnswer = answer;
-                    FeedbackMessage = "Wrong Answer";
-                    
-                    // Show feedback before decreasing lives
-                    await Task.Delay(500);
-                    
-                    if (Lives > 0)
+                    Lives--;
+                    if (Lives <= 0)
                     {
-                        Lives--; // Decrease lives once
-                        
-                        if (Lives <= 0)
-                        {
-                            EndGame();
-                            SaveHighScore();
-                            
-                            // REMOVED: Don't show alert popup, use only Game Over overlay
-                            // Just restart game when user clicks Play Again button on overlay
-                        }
-                        else
-                        {
-                            // Show the feedback for a moment longer before next question
-                            await Task.Delay(500);
-                            LoadNextQuestion(); 
-                        }
+                        EndGame();
+                        SaveHighScore();
+                    }
+                    else
+                    {
+                        LoadNextQuestion();
                     }
                 }
-                
-                return isCorrect;
             }
-            catch (Exception ex)
-            {
-                // Log error and recover
-                System.Diagnostics.Debug.WriteLine($"Error in CheckAnswerAsync: {ex.Message}");
-                return false;
-            }
+            return isCorrect;
         }
 
         public void ResetLives()
@@ -531,6 +589,60 @@ namespace EducGramming.ViewModels
                 System.Diagnostics.Debug.WriteLine($"Error in ResetLives: {ex.Message}");
                 _lives = 3;
                 OnPropertyChanged(nameof(Lives));
+            }
+        }
+
+        private void PlayCorrectSound()
+        {
+            try
+            {
+                _correctSoundPlayer?.Stop();
+                _correctSoundPlayer?.Dispose();
+                var file = FileSystem.OpenAppPackageFileAsync("Sounds/Correct Sound Effect  Bgm & Sound Effect.mp3").Result;
+                _correctSoundPlayer = _audioManager.CreatePlayer(file);
+                _correctSoundPlayer.Play();
+            }
+            catch { }
+        }
+
+        private void PlayWrongSound()
+        {
+            try
+            {
+                _wrongSoundPlayer?.Stop();
+                _wrongSoundPlayer?.Dispose();
+                var file = FileSystem.OpenAppPackageFileAsync("Sounds/Wrong Answer - Sound Effects HQ.mp3").Result;
+                _wrongSoundPlayer = _audioManager.CreatePlayer(file);
+                _wrongSoundPlayer.Play();
+            }
+            catch { }
+        }
+
+        private void PlayFailSound()
+        {
+            try
+            {
+                _failSoundPlayer?.Stop();
+                _failSoundPlayer?.Dispose();
+                var file = FileSystem.OpenAppPackageFileAsync("Sounds/Fail Sound Effect.mp3").Result;
+                _failSoundPlayer = _audioManager.CreatePlayer(file);
+                _failSoundPlayer.Play();
+            }
+            catch { }
+        }
+
+        public void ContinueAfterHeartFade()
+        {
+            if (!IsWrongAnswer)
+                FeedbackVisible = false;
+            IsWrongAnswer = false;
+            if (Lives == 0)
+            {
+                EndGame();
+            }
+            else
+            {
+                LoadNextQuestion();
             }
         }
 

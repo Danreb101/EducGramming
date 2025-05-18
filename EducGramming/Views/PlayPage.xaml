@@ -7,7 +7,7 @@
              x:DataType="viewmodels:PlayViewModel"
              BackgroundColor="#0A1128">
 
-    <Grid RowDefinitions="Auto,*" Padding="20">
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20">
         <!-- Header Section -->
         <Grid Grid.Row="0" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
             <!-- Title -->
@@ -33,7 +33,6 @@
                   Grid.ColumnSpan="3"
                   ColumnDefinitions="Auto,*,Auto"
                   Margin="0,10,0,0">
-                
                 <!-- Lives -->
                 <Frame Grid.Column="0"
                        BackgroundColor="#1B3B6F"
@@ -94,7 +93,6 @@
                                FontAttributes="Bold"
                                VerticalOptions="Center"/>
                     </HorizontalStackLayout>
-                    
                     <HorizontalStackLayout Spacing="3">
                         <Label Text="Best:"
                                TextColor="White"
@@ -116,9 +114,6 @@
                        Padding="10,5"
                        HasShadow="False">
                     <HorizontalStackLayout Spacing="5">
-                        <Image Source="timer.png"
-                               HeightRequest="18"
-                               Opacity="0.8"/>
                         <Label Text="TIME:"
                                TextColor="White"
                                FontSize="16"
@@ -136,50 +131,76 @@
 
         <!-- Main Content -->
         <Grid Grid.Row="1" RowDefinitions="2*,Auto,3*" Margin="0,20,0,0">
+            <!-- Language Label OUTSIDE the question frame -->
+            <Frame BackgroundColor="#0A1128"
+                   Padding="0,8"
+                   CornerRadius="10"
+                   HasShadow="False"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,10">
+                <Label Text="{Binding CurrentLanguage}"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       TextColor="#FFD600"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+            </Frame>
             <!-- Question Section -->
             <Frame BackgroundColor="White"
                    CornerRadius="15"
                    Padding="20"
                    HasShadow="True"
                    Grid.Row="0">
-                <Label Text="{Binding CurrentQuestion}"
+                <VerticalStackLayout>
+                    <Label Text="{Binding CurrentQuestion}"
+                           FontSize="24"
+                           TextColor="#333333"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
+            </Frame>
+            <!-- Feedback Message OUTSIDE and BELOW the question frame -->
+            <HorizontalStackLayout
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Margin="0,10"
+                IsVisible="{Binding FeedbackVisible}"
+                Spacing="5">
+                <Label Text="{Binding IsWrongAnswer, Converter={StaticResource BoolToIconConverter}}"
                        FontSize="24"
-                       TextColor="#333333"
-                       HorizontalOptions="Center"
+                       TextColor="{Binding IsWrongAnswer, Converter={StaticResource BoolToColorConverter}}"
+                       VerticalOptions="Center"/>
+                <Label Text="{Binding FeedbackMessage}"
+                       TextColor="{Binding IsWrongAnswer, Converter={StaticResource BoolToColorConverter}}"
+                       FontSize="20"
+                       FontAttributes="Bold"
                        VerticalOptions="Center"
                        HorizontalTextAlignment="Center"/>
-            </Frame>
-
-            <!-- Feedback Message -->
-            <Label Grid.Row="1"
-                   Text="{Binding FeedbackMessage}"
-                   TextColor="{Binding IsWrongAnswer, Converter={StaticResource BoolToColorConverter}}"
-                   FontSize="20"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"
-                   Margin="0,10"
-                   IsVisible="{Binding FeedbackMessage, Converter={StaticResource StringToVisibilityConverter}}"
-                   HorizontalTextAlignment="Center"/>
+            </HorizontalStackLayout>
 
             <!-- Answer Options Section -->
             <VerticalStackLayout Grid.Row="2" 
                                Spacing="15"
                                Margin="0,10,0,0">
-                
-                <Frame BackgroundColor="#1B3B6F"
-                       CornerRadius="15"
+                <Frame BackgroundColor="#B3E5FC"
+                       BorderColor="#FFD600"
+                       CornerRadius="25"
                        Padding="20"
                        HeightRequest="80"
-                       HasShadow="True"
+                       HasShadow="False"
                        x:Name="AnswerDropZone">
-                    <Label Text="Drop your answer here"
-                           TextColor="#B0B0B0"
+                    <Frame.GestureRecognizers>
+                        <DropGestureRecognizer DragOver="OnDragOver" Drop="OnDrop" DragLeave="OnDragLeave" />
+                    </Frame.GestureRecognizers>
+                    <Label Text="{Binding DroppedAnswer, TargetNullValue='Drop your answer here'}"
+                           TextColor="#FFFFFF"
+                           FontSize="22"
+                           FontAttributes="Bold"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
-                           FontSize="16"/>
+                           HorizontalTextAlignment="Center"/>
                 </Frame>
-
                 <!-- Answer Options -->
                 <CollectionView ItemsSource="{Binding AnswerOptions}"
                               SelectionMode="None">
@@ -188,15 +209,15 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="x:String">
-                            <Frame BackgroundColor="{Binding ., Converter={StaticResource AnswerToBackgroundConverter}, ConverterParameter={Binding Source={RelativeSource AncestorType={x:Type viewmodels:PlayViewModel}}, Path=LastWrongAnswer}}"
+                            <Frame BackgroundColor="#23407A"
                                    CornerRadius="15"
                                    Padding="20"
                                    HasShadow="True">
                                 <Frame.GestureRecognizers>
-                                    <DragGestureRecognizer DragStarting="OnDragStarting"/>
+                                    <DragGestureRecognizer DragStarting="OnDragStarting" />
                                 </Frame.GestureRecognizers>
                                 <Label Text="{Binding .}"
-                                       TextColor="#333333"
+                                       TextColor="#FFFFFF"
                                        HorizontalOptions="Center"
                                        FontSize="18"/>
                             </Frame>
@@ -209,28 +230,28 @@
         <!-- Game Over Overlay -->
         <Grid Grid.RowSpan="2"
               BackgroundColor="#80000000"
-              IsVisible="{Binding IsGameOver}">
+              IsVisible="{Binding IsGameOver}"
+              InputTransparent="False">
             <VerticalStackLayout HorizontalOptions="Center"
                                VerticalOptions="Center"
                                Spacing="20">
                 <Label Text="Game Over!"
                        TextColor="White"
-                   FontSize="32"
+                       FontSize="32"
                        FontAttributes="Bold"
                        HorizontalOptions="Center"/>
                 <Label Text="{Binding Score, StringFormat='Final Score: {0}'}"
                        TextColor="White"
                        FontSize="24"
-                   HorizontalOptions="Center"/>
+                       HorizontalOptions="Center"/>
                 <Button Text="Play Again"
                         Command="{Binding RestartCommand}"
-                        Clicked="OnRestartClicked"
                         BackgroundColor="#1B3B6F"
                         TextColor="White"
                         FontAttributes="Bold"
                         CornerRadius="25"
                         Padding="30,15"/>
-        </VerticalStackLayout>
+            </VerticalStackLayout>
         </Grid>
     </Grid>
 </ContentPage> 

@@ -15,6 +15,10 @@
             <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
             <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
             <converters:BoolToExpandCollapseIconConverter x:Key="BoolToExpandCollapseIconConverter"/>
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <converters:AnswerToBackgroundConverter x:Key="AnswerToBackgroundConverter"/>
+            <converters:InverseBoolConverter x:Key="InverseBool"/>
+            <converters:PasswordVisibilityIconConverter x:Key="PasswordVisibilityIconConverter"/>
 
             <!-- Colors -->
             <Color x:Key="Primary">#007AFF</Color>

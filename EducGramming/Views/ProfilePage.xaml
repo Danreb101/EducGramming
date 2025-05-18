@@ -35,7 +35,7 @@
                                HorizontalOptions="Center"/>
                         
                         <!-- Name with Edit Button -->
-                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="5" HorizontalOptions="Center">
+                        <Grid ColumnDefinitions="Auto" HorizontalOptions="Center">
                             <Label Grid.Column="0"
                                    Text="{Binding FullName}"
                                    TextColor="#007AFF"
@@ -43,23 +43,6 @@
                                    FontAttributes="Bold"
                                    VerticalOptions="Center"
                                    HorizontalOptions="Center"/>
-                            
-                            <!-- Edit Icon Button -->
-                            <ImageButton Grid.Column="1"
-                                        Command="{Binding EditNameCommand}"
-                                        Source="edit.png"
-                                        HeightRequest="24"
-                                        WidthRequest="24"
-                                        Padding="0"
-                                        Margin="0,0,0,0"
-                                        BackgroundColor="Transparent"
-                                        VerticalOptions="Center">
-                                <ImageButton.Triggers>
-                                    <Trigger TargetType="ImageButton" Property="IsPressed" Value="True">
-                                        <Setter Property="Opacity" Value="0.7" />
-                                    </Trigger>
-                                </ImageButton.Triggers>
-                            </ImageButton>
                         </Grid>
                         
                         <Label Text="{Binding Email}"

@@ -17,7 +17,7 @@ namespace EducGramming.ViewModels
         private bool _isRefreshing;
         private int _currentUserRank;
         private int _currentUserScore;
-        private string _currentUsername = "Player";
+        private string _currentName = "Player";
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -73,14 +73,14 @@ namespace EducGramming.ViewModels
             }
         }
 
-        public string CurrentUsername
+        public string CurrentName
         {
-            get => _currentUsername;
+            get => _currentName;
             set
             {
-                if (_currentUsername != value)
+                if (_currentName != value)
                 {
-                    _currentUsername = value;
+                    _currentName = value;
                     OnPropertyChanged();
                 }
             }
@@ -103,8 +103,8 @@ namespace EducGramming.ViewModels
             {
                 IsRefreshing = true;
                 Entries = await _leaderboardService.GetLeaderboardAsync();
-                CurrentUserRank = await _leaderboardService.GetUserRankAsync(CurrentUsername);
-                CurrentUserScore = await _leaderboardService.GetUserScoreAsync(CurrentUsername);
+                CurrentUserRank = await _leaderboardService.GetUserRankAsync(CurrentName);
+                CurrentUserScore = await _leaderboardService.GetUserScoreAsync(CurrentName);
             }
             catch (Exception ex)
             {

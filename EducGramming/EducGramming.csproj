@@ -80,7 +80,30 @@
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 		
 		<!-- Video Assets -->
-		<MauiAsset Include="Videos\**" LogicalName="Videos\%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <AndroidJavaSource Remove="Videos\**" />
+	  <AndroidLibrary Remove="Videos\**" />
+	  <AndroidNativeLibrary Remove="Videos\**" />
+	  <Compile Remove="Videos\**" />
+	  <EmbeddedResource Remove="Videos\**" />
+	  <JavaSourceJar Remove="Videos\**" />
+	  <None Remove="Videos\**" />
+	  <ProguardConfiguration Remove="Videos\**" />
+	  <TransformFile Remove="Videos\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="Sounds\Correct Sound Effect  Bgm &amp; Sound Effect.mp3" />
+	  <None Remove="Sounds\Fail Sound Effect.mp3" />
+	  <None Remove="Sounds\Wrong Answer - Sound Effects HQ.mp3" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiAsset Include="Sounds\Correct Sound Effect  Bgm &amp; Sound Effect.mp3" />
+	  <MauiAsset Include="Sounds\Fail Sound Effect.mp3" />
+	  <MauiAsset Include="Sounds\Wrong Answer - Sound Effects HQ.mp3" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -90,11 +113,7 @@
 		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
 		<PackageReference Include="CommunityToolkit.Maui" Version="7.0.1" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Videos\Csharp\" />
-		<Folder Include="Videos\Java\" />
+		<PackageReference Include="Plugin.Maui.Audio" Version="3.1.1" />
 	</ItemGroup>
 
 </Project>
