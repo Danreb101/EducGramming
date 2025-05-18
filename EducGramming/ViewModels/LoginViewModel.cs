@@ -161,6 +161,12 @@ namespace EducGramming.ViewModels
                         
                         // Navigate to main app
                         Debug.WriteLine("Login successful, navigating to AppShell");
+
+                        // Set HighScore in preferences from leaderboard
+                        var leaderboardService = new LeaderboardService();
+                        int userScore = await leaderboardService.GetUserScoreAsync(Email);
+                        Preferences.Default.Set("HighScore", userScore);
+
                         Application.Current.MainPage = new AppShell();
                     }
                 }

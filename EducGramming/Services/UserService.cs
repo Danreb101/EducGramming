@@ -268,6 +268,10 @@ namespace EducGramming.Services
                         userToUpdate.Password = newPassword;
                         await SaveUsers(allUsers);
                         Debug.WriteLine("Password updated in local storage");
+
+                        // Send custom email notification
+                        var emailService = new EmailService();
+                        await emailService.SendPasswordChangedEmailAsync(email, userToUpdate.FullName ?? email);
                     }
 
                     await MainThread.InvokeOnMainThreadAsync(async () =>

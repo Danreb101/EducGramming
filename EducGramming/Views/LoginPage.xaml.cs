@@ -118,7 +118,19 @@ namespace EducGramming.Views
                 {
                     Debug.WriteLine($"Authentication error: {authEx.Message}");
                     errorLabel.TextColor = Color.FromArgb("#FF4444"); // Red color
-                    errorLabel.Text = authEx.Message;
+                    // Show a user-friendly message for incorrect password
+                    if (authEx.Message.Contains("password is incorrect") || authEx.Message.Contains("INVALID_PASSWORD") || authEx.Message.Contains("Incorrect password"))
+                    {
+                        errorLabel.Text = "The password you entered is incorrect.";
+                    }
+                    else if (authEx.Message.Contains("Exception occured while authenticating"))
+                    {
+                        errorLabel.Text = "An error occurred while trying to sign in. Please check your credentials and try again.";
+                    }
+                    else
+                    {
+                        errorLabel.Text = authEx.Message;
+                    }
                     errorLabel.IsVisible = true;
                     
                     // Clear password field on authentication error
@@ -163,17 +175,12 @@ namespace EducGramming.Views
 
         private async void OnForgotPasswordClicked(object sender, EventArgs e)
         {
-            // Validate email before navigating
-            if (string.IsNullOrWhiteSpace(emailEntry.Text))
+            // Remove the check for empty email and always navigate to reset password page
+            // Store the email for the reset password page if present
+            if (!string.IsNullOrWhiteSpace(emailEntry.Text))
             {
-                errorLabel.Text = "Please enter your email address first";
-                errorLabel.IsVisible = true;
-                return;
+                Preferences.Default.Set("ResetEmail", emailEntry.Text.Trim());
             }
-
-            // Store the email for the reset password page
-            Preferences.Default.Set("ResetEmail", emailEntry.Text.Trim());
-            
             // Navigate to reset password page
             await Shell.Current.GoToAsync("//resetpassword");
         }

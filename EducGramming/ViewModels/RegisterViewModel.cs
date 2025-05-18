@@ -68,8 +68,13 @@ namespace EducGramming.ViewModels
             {
                 IsBusy = true;
 
+                // Trim email before registration
+                Email = Email?.Trim();
                 // Register user with email, password, and full name only
                 await _userService.RegisterUser(Email, Password, FullName);
+
+                // Set initial high score for new user
+                Preferences.Default.Set("HighScore", 0);
 
                 await Application.Current.MainPage.DisplayAlert("Success", "Registration successful! Please log in.", "OK");
                 await NavigateToLogin();
@@ -122,6 +127,8 @@ namespace EducGramming.ViewModels
                     return false;
                 }
 
+                // Trim email before registration
+                Email = Email?.Trim();
                 // Register user with Firebase through UserService
                 await _userService.RegisterUser(Email, Password, FullName);
                 return true;
